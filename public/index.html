@@ -132,6 +132,7 @@
         <button id="exportBtn" class="btn primary wide"><i data-icon="film"></i><span>Export overlay</span></button>
         <button id="cancelBtn" class="btn ghost wide" hidden><i data-icon="x"></i><span>Cancel</span></button>
       </div>
+      <button id="batchBtn" class="btn wide"><i data-icon="list"></i><span>Batch export from a list…</span></button>
       <button id="stillBtn" class="btn ghost wide small"><i data-icon="image"></i><span>Save this frame as PNG</span></button>
     </div>
   </aside>
@@ -148,6 +149,37 @@
       <button type="submit" class="btn primary" id="dialogOk" value="ok">OK</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="batchDialog" class="dialog batch" aria-labelledby="batchTitle">
+  <div class="batch-head">
+    <div>
+      <h2 class="eyebrow">Batch export</h2>
+      <p class="dialog-title" id="batchTitle">One overlay per row</p>
+      <p class="dialog-body">Paste a list, straight from Google Sheets or Excel works. Each column becomes a line on screen. You can also separate lines with <kbd>|</kbd>. Everything else uses the current design.</p>
+    </div>
+    <button type="button" class="btn ghost icon-only" id="batchClose" aria-label="Close"><i data-icon="x"></i></button>
+  </div>
+  <div class="batch-grid">
+    <div class="batch-left">
+      <label class="row" for="batchInput">Your list
+        <textarea id="batchInput" rows="9" spellcheck="false" placeholder="Speaker One&#9;Head of Marketing, Company&#10;Speaker Two&#9;Founder, Studio"></textarea>
+      </label>
+      <div class="batch-opts">
+        <label class="check" id="batchBadgeRow"><input type="checkbox" id="batchBadgeFirst"> First column is the badge (e.g. a time)</label>
+        <button type="button" class="btn ghost small" id="batchSample">Fill in an example</button>
+      </div>
+    </div>
+    <div class="batch-right">
+      <canvas id="batchPreview" width="480" height="270" aria-label="Preview of the selected row"></canvas>
+      <div class="batch-meta"><span id="batchCount">Nothing yet</span> · <span id="batchFormat"></span></div>
+      <ol class="batch-list" id="batchList"></ol>
+    </div>
+  </div>
+  <div class="batch-foot">
+    <p class="hint" id="batchFolderHint"></p>
+    <button type="button" class="btn primary" id="batchGo" disabled><i data-icon="film"></i><span>Export</span></button>
+  </div>
 </dialog>
 
 <template id="toast"><div class="toast" role="status"></div></template>

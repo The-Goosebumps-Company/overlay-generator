@@ -35,6 +35,7 @@ const ICON_PATHS = {
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
   minus: '<path d="M5 12h14"/>',
+  list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ''}</svg>`;
 const hydrateIcons = (root = document) => root.querySelectorAll('i[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
@@ -452,7 +453,8 @@ function progress(p, text) {
   $('progressBar').style.width = `${Math.round((p || 0) * 100)}%`;
   $('progressText').textContent = text || '';
 }
-const outName = () => slug(state.text.content.split('\n').join(' '));
+const nameFor = (s) => slug(s.text.content.split('\n').join(' '));
+const outName = () => nameFor(state);
 
 let exporting = false, cancelRequested = false;
 class Cancelled extends Error {}
@@ -462,14 +464,15 @@ function setExporting(on) {
   $('exportBtn').hidden = on;
   $('cancelBtn').hidden = !on;
   $('stillBtn').disabled = on;
+  $('batchBtn').disabled = on;
 }
+const engineFor = (fmt) => (fmt === 'png' ? 'browser' : server.ffmpeg ? 'server' : 'browser-ffmpeg');
 
-async function exportOverlay() {
-  if (exporting) return;
-  const fmt = $('formatSelect').value;
-  const tStart = performance.now();
-  log('info', 'export.start', { engine: fmt === 'png' ? 'browser' : server.ffmpeg ? 'server' : 'browser-ffmpeg', format: fmt, name: state.name, size: `${state.width}x${state.height}`, fps: state.fps, duration: state.duration, text: state.text.content.replace(/\n/g, ' / ') });
-  const s = structuredClone(state);
+/**
+ * Render one overlay design to a file. Shared by single and batch export.
+ * @returns {Promise<{blob: Blob, filename: string}>}
+ */
+async function renderToFile(s, fmt, onProgress, base = nameFor(s)) {
   await ensureFonts(s);
   const W = s.width, H = s.height, fr = FPS_OPTIONS[s.fps];
   const N = Math.max(1, Math.round(s.duration * fr.num));
@@ -477,60 +480,194 @@ async function exportOverlay() {
   off.width = W; off.height = H;
   const octx = off.getContext('2d', { willReadFrequently: true });
   const pixels = (n) => { checkCancel(); drawFrame(octx, s, n / fr.num, W, H); return octx.getImageData(0, 0, W, H).data; };
-  const name = `${outName()}_${W}x${H}_${s.fps}fps`;
+  const name = `${base}_${W}x${H}_${s.fps}fps`;
+  const movName = `${name}${fmt === 'prores' ? '_ProRes4444' : '_Animation'}.mov`;
+
+  if (fmt === 'png') {
+    const files = [];
+    for (let n = 0; n < N; n++) {
+      files.push({ name: `${name}/${name}_${String(n).padStart(5, '0')}.png`, data: await encodePNG(pixels(n), W, H) });
+      onProgress((n + 1) / N * 0.97, `Frame ${n + 1} of ${N}`);
+    }
+    onProgress(0.98, 'Zipping…');
+    return { blob: makeZip(files), filename: `${name}_PNG.zip` };
+  }
+  if (!server.ffmpeg) {
+    // No server: encode on this computer with ffmpeg.wasm
+    const blob = await encodeMov({ count: N, rate: fr.rate, format: fmt, frame: (n) => encodePNG(pixels(n), W, H), onProgress: (p, msg) => { checkCancel(); onProgress(p, msg); } });
+    checkCancel();
+    return { blob, filename: movName };
+  }
+  const job = await (await fetch('/api/render', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fps: s.fps, width: W, height: H, format: fmt, name, frames: N }) })).json();
+  if (!job.id) throw new Error(job.error || 'Server refused the job');
+  const inflight = new Set();
+  let sent = 0;
+  for (let n = 0; n < N; n++) {
+    const body = await gzip(pixels(n));
+    const p = fetch(`/api/render/${job.id}/${n}`, { method: 'PUT', body }).then((r) => { if (!r.ok) throw new Error('Upload failed'); sent++; onProgress(sent / N * 0.9, `Frame ${sent} of ${N}`); });
+    inflight.add(p); p.finally(() => inflight.delete(p));
+    if (inflight.size >= 6) await Promise.race(inflight);
+  }
+  await Promise.all(inflight);
+  checkCancel();
+  onProgress(0.93, fmt === 'prores' ? 'Encoding ProRes 4444…' : 'Encoding QuickTime Animation…');
+  const r = await fetch(`/api/render/${job.id}/finish`, { method: 'POST' });
+  if (!r.ok) throw new Error(await r.text());
+  const blob = await r.blob();
+  checkCancel();
+  return { blob, filename: movName };
+}
+
+// Runs an export job with shared progress / cancel / error handling.
+async function runExport(kind, details, job) {
+  if (exporting) return false;
+  const tStart = performance.now();
+  log('info', `${kind}.start`, details);
   cancelRequested = false;
   setExporting(true);
   progress(0, 'Starting…');
   try {
-    if (fmt === 'png') {
-      const files = [];
-      for (let n = 0; n < N; n++) {
-        files.push({ name: `${name}/${name}_${String(n).padStart(5, '0')}.png`, data: await encodePNG(pixels(n), W, H) });
-        progress((n + 1) / N, `Frame ${n + 1} of ${N}`);
-      }
-      progress(1, 'Zipping…');
-      download(makeZip(files), `${name}_PNG.zip`);
-    } else if (!server.ffmpeg) {
-      // No server: encode on this computer with ffmpeg.wasm
-      const blob = await encodeMov({ count: N, rate: fr.rate, format: fmt, frame: (n) => encodePNG(pixels(n), W, H), onProgress: (p, msg) => { checkCancel(); progress(p, msg); } });
-      checkCancel();
-      download(blob, `${name}${fmt === 'prores' ? '_ProRes4444' : '_Animation'}.mov`);
-    } else {
-      const job = await (await fetch('/api/render', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fps: s.fps, width: W, height: H, format: fmt, name, frames: N }) })).json();
-      if (!job.id) throw new Error(job.error || 'Server refused the job');
-      const inflight = new Set();
-      let sent = 0;
-      for (let n = 0; n < N; n++) {
-        const body = await gzip(pixels(n));
-        const p = fetch(`/api/render/${job.id}/${n}`, { method: 'PUT', body }).then((r) => { if (!r.ok) throw new Error('Upload failed'); sent++; progress(sent / N * 0.9, `Frame ${sent} of ${N}`); });
-        inflight.add(p); p.finally(() => inflight.delete(p));
-        if (inflight.size >= 6) await Promise.race(inflight);
-      }
-      await Promise.all(inflight);
-      checkCancel();
-      progress(0.93, fmt === 'prores' ? 'Encoding ProRes 4444…' : 'Encoding QuickTime Animation…');
-      const r = await fetch(`/api/render/${job.id}/finish`, { method: 'POST' });
-      if (!r.ok) throw new Error(await r.text());
-      const blob = await r.blob();
-      checkCancel();
-      download(blob, `${name}${fmt === 'prores' ? '_ProRes4444' : '_Animation'}.mov`);
-    }
-    log('info', 'export.done', { format: fmt, seconds: +((performance.now() - tStart) / 1000).toFixed(1) });
-    progress(1, 'Done. Check your Downloads.');
-    toast('Export finished. It’s in your Downloads folder.');
+    const msg = await job();
+    log('info', `${kind}.done`, { ...details, seconds: +((performance.now() - tStart) / 1000).toFixed(1) });
+    progress(1, 'Done.');
+    toast(msg);
     setTimeout(() => { if (!exporting) progress(null); }, 3000);
+    return true;
   } catch (e) {
     if (e instanceof Cancelled || cancelRequested) {
-      log('info', 'export.cancelled', { format: fmt });
+      log('info', `${kind}.cancelled`, details);
       toast('Export cancelled.');
     } else {
-      log('error', 'export.failed', { format: fmt, ...errInfo(e) });
+      log('error', `${kind}.failed`, { ...details, ...errInfo(e) });
       toast(`Export failed: ${e.message}`);
     }
     progress(null);
+    return false;
   } finally {
     setExporting(false);
   }
+}
+
+async function exportOverlay() {
+  const fmt = $('formatSelect').value;
+  const s = structuredClone(state);
+  await runExport('export', { engine: engineFor(fmt), format: fmt, name: s.name, size: `${s.width}x${s.height}`, fps: s.fps, duration: s.duration, text: s.text.content.replace(/\n/g, ' / ') }, async () => {
+    const { blob, filename } = await renderToFile(s, fmt, (p, m) => progress(p, m));
+    download(blob, filename);
+    return 'Export finished. It’s in your Downloads folder.';
+  });
+}
+
+// ---------- batch export ----------
+// Each row = one overlay. Columns (tabs from a spreadsheet, or "|") become lines on screen.
+function parseBatch(text, badgeFirst) {
+  return text.split(/\r?\n/).map((r) => r.trim()).filter(Boolean).map((row) => {
+    const cols = row.split(/\t|\s*\|\s*/).map((c) => c.trim()).filter(Boolean);
+    const badge = badgeFirst && cols.length > 1 ? cols.shift() : null;
+    return { badge, content: cols.join('\n') };
+  }).filter((r) => r.content);
+}
+function designForRow(row, base = state) {
+  const s = structuredClone(base);
+  s.text.content = row.content;
+  if (row.badge != null) { s.badge.enabled = true; s.badge.text = row.badge; }
+  return s;
+}
+
+let batchPreviewIndex = 0;
+function setupBatch() {
+  const dlg = $('batchDialog'), ta = $('batchInput'), badgeBox = $('batchBadgeFirst'), list = $('batchList'), pv = $('batchPreview');
+  ta.value = localStorage.getItem('og-batch') || '';
+  const rows = () => parseBatch(ta.value, badgeBox.checked);
+  const drawPreview = () => {
+    const r = rows();
+    if (!r.length) { pv.getContext('2d').clearRect(0, 0, pv.width, pv.height); return; }
+    batchPreviewIndex = Math.min(batchPreviewIndex, r.length - 1);
+    const s = designForRow(r[batchPreviewIndex]);
+    pv.width = 480; pv.height = Math.round(480 * s.height / s.width);
+    ensureFonts(s).then(() => drawFrame(pv.getContext('2d'), s, holdTime(s), s.width, s.height));
+  };
+  const refresh = () => {
+    localStorage.setItem('og-batch', ta.value);
+    const r = rows();
+    $('batchCount').textContent = r.length ? `${r.length} overlay${r.length === 1 ? '' : 's'}` : 'Nothing yet';
+    $('batchGo').disabled = !r.length;
+    $('batchGo').querySelector('span').textContent = r.length ? `Export ${r.length} overlay${r.length === 1 ? '' : 's'}` : 'Export';
+    list.innerHTML = '';
+    r.slice(0, 200).forEach((row, i) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'batch-row';
+      b.setAttribute('aria-current', String(i === batchPreviewIndex));
+      b.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span>${row.badge ? `<span class="badge-chip"></span>` : ''}<span class="txt"></span>`;
+      if (row.badge) b.querySelector('.badge-chip').textContent = row.badge;
+      b.querySelector('.txt').textContent = row.content.replace(/\n/g, ' · ');
+      b.onclick = () => { batchPreviewIndex = i; refresh(); };
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    drawPreview();
+  };
+  ta.oninput = () => { batchPreviewIndex = 0; refresh(); };
+  badgeBox.onchange = refresh;
+  $('batchBtn').onclick = () => {
+    $('batchBadgeRow').hidden = !state.badge.enabled;
+    if (!state.badge.enabled) badgeBox.checked = false;
+    $('batchFormat').textContent = $('formatSelect').selectedOptions[0].textContent;
+    $('batchFolderHint').textContent = typeof window.showDirectoryPicker === 'function'
+      ? 'You’ll pick a folder and every file is saved straight into it.'
+      : 'Files download one after another. Allow multiple downloads if your browser asks.';
+    refresh();
+    dlg.showModal();
+    ta.focus();
+  };
+  $('batchClose').onclick = () => dlg.close();
+  $('batchSample').onclick = () => {
+    ta.value = state.badge.enabled
+      ? '18:00\tOpening set\tDJ One\n19:30\tMain act\tThe Headliners\n21:00\tClosing set\tDJ Two'
+      : 'Speaker One\tHead of Marketing, Company\nSpeaker Two\tFounder, Studio\nSpeaker Three\tCreative Director, Agency';
+    badgeBox.checked = state.badge.enabled;
+    batchPreviewIndex = 0;
+    refresh();
+  };
+  $('batchGo').onclick = async () => {
+    const r = rows();
+    if (!r.length) return;
+    let dir = null;
+    if (typeof window.showDirectoryPicker === 'function') {
+      try { dir = await window.showDirectoryPicker({ id: 'overlay-batch', mode: 'readwrite', startIn: 'downloads' }); }
+      catch (e) { if (e.name === 'AbortError') return; log('warn', 'batch.folder.failed', errInfo(e)); }
+    }
+    dlg.close();
+    await exportBatch(r, dir);
+  };
+}
+
+async function exportBatch(rows, dir) {
+  const fmt = $('formatSelect').value;
+  const base = structuredClone(state);
+  const total = rows.length;
+  const pad = String(total).length < 2 ? 2 : String(total).length;
+  await runExport('batch', { engine: engineFor(fmt), format: fmt, count: total, target: dir ? 'folder' : 'downloads', size: `${base.width}x${base.height}` }, async () => {
+    for (let i = 0; i < total; i++) {
+      checkCancel();
+      const s = designForRow(rows[i], base);
+      const prefix = `${String(i + 1).padStart(pad, '0')}_${nameFor(s)}`;
+      const { blob, filename } = await renderToFile(s, fmt, (p, m) => progress((i + p) / total, `${i + 1} of ${total} · ${m}`), prefix);
+      if (dir) {
+        const fh = await dir.getFileHandle(filename, { create: true });
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+      } else {
+        download(blob, filename);
+        await new Promise((res) => setTimeout(res, 400)); // let the browser start each download
+      }
+      log('info', 'batch.item', { n: i + 1, of: total, file: filename, mb: +(blob.size / 1e6).toFixed(1) });
+    }
+    return dir ? `${total} overlays saved to “${dir.name}”.` : `${total} overlays exported. They’re in your Downloads folder.`;
+  });
 }
 function cancelExport() {
   if (!exporting) return;
@@ -798,6 +935,7 @@ async function init() {
   $('exportBtn').onclick = exportOverlay;
   $('cancelBtn').onclick = cancelExport;
   $('stillBtn').onclick = exportStill;
+  setupBatch();
   new ResizeObserver(fitViewport).observe($('viewportWrap'));
   renderTemplates();
   // Only poll when there's a server to talk to (standalone/PWA mode has none)

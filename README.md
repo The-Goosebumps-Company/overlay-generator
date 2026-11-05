@@ -58,6 +58,7 @@ Keep that Mac awake while people use it. Change the port with `PORT=8080 npm sta
 - **Editable:** text, font (Google fonts, or upload brand fonts), size, spacing, glow colours and gradient, glow depth and softness, corner radius, padding, moving light blobs, and an optional badge (e.g. a time like `14:10`) with digit scramble.
 - **In / Out animations:** line → box, fade, pop or slide in and out, with letter cascade, word, line, typewriter or fade text reveals. You can turn each one on or off and set its length.
 - **Responsive:** the box sizes itself to the text, and you can render 16:9, 1:1, 4:5, 9:16, 4K or a custom size. The layout scales with the frame and shrinks to fit inside the safe margins.
+- **Batch export:** paste a list (straight from Google Sheets or Excel) and get one overlay per row, numbered and saved into a folder you pick. Columns become lines on screen; the first column can be the badge (e.g. a time).
 - **Shared presets:** "Save preset" stores the design on the server (`presets/`) so the whole office sees it. "Download .json" / "Open .json" moves designs around by hand.
 - **Shared fonts:** uploaded fonts are saved to `fonts/` and load for everyone.
 
