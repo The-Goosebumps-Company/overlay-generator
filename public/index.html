@@ -85,25 +85,33 @@
   <aside class="panel export" aria-label="Output and export">
     <div class="export-scroll">
       <h2 class="eyebrow">Output</h2>
-      <label class="row">Size
-        <select id="resSelect">
-          <option value="1920x1080">1920 × 1080 · 16:9 HD</option>
-          <option value="3840x2160">3840 × 2160 · 16:9 4K</option>
-          <option value="1080x1080">1080 × 1080 · 1:1</option>
-          <option value="1080x1350">1080 × 1350 · 4:5</option>
-          <option value="1080x1920">1080 × 1920 · 9:16</option>
-          <option value="2160x3840">2160 × 3840 · 9:16 4K</option>
-          <option value="custom">Custom…</option>
-        </select>
-      </label>
+      <div class="row">
+        <span id="shapeLabel">Shape</span>
+        <div class="seg seg-shape" id="shapeSeg" role="radiogroup" aria-labelledby="shapeLabel">
+          <button type="button" role="radio" data-shape="landscape"><i class="shape-ico" style="--w:22px;--h:12.4px"></i><span>Landscape</span></button>
+          <button type="button" role="radio" data-shape="portrait"><i class="shape-ico" style="--w:10px;--h:17.8px"></i><span>Portrait</span></button>
+          <button type="button" role="radio" data-shape="square"><i class="shape-ico" style="--w:15px;--h:15px"></i><span>Square</span></button>
+          <button type="button" role="radio" data-shape="feed"><i class="shape-ico" style="--w:13px;--h:16.25px"></i><span>Feed</span></button>
+        </div>
+        <p class="hint" id="shapeHint"></p>
+      </div>
+      <div class="row" id="qualityRow">
+        <span id="qualityLabel">Quality</span>
+        <div class="seg seg-two" id="qualitySeg" role="radiogroup" aria-labelledby="qualityLabel">
+          <button type="button" role="radio" data-quality="hd"><b>HD</b><span>Everyday use</span></button>
+          <button type="button" role="radio" data-quality="4k"><b>4K</b><span>Big screens, 4K edits</span></button>
+        </div>
+      </div>
+      <p class="px-note"><span id="pxNote"></span> · <button type="button" class="link" id="customToggle">Custom size</button></p>
       <div class="row two" id="customRes" hidden>
-        <label>Width<input type="number" id="resW" min="16" max="7680" step="2"></label>
-        <label>Height<input type="number" id="resH" min="16" max="7680" step="2"></label>
+        <label>Width (px)<input type="number" id="resW" min="16" max="7680" step="2"></label>
+        <label>Height (px)<input type="number" id="resH" min="16" max="7680" step="2"></label>
       </div>
       <div class="row two">
-        <label>Frame rate<select id="fpsSelect"></select></label>
+        <label>Frame rate<select id="fpsSelect" title="Match your editing timeline"></select></label>
         <label>Length (s)<input type="number" id="durInput" min="0.5" max="120" step="0.1"></label>
       </div>
+      <p class="hint">Use the same frame rate as your edit. Not sure? 25 fps.</p>
 
       <h2 class="eyebrow">Export</h2>
       <label class="row">Format

@@ -147,6 +147,27 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .row.two { grid-template-columns: 1fr 1fr; gap: 10px; }
 .row.two label { display: grid; gap: 6px; }
 
+/* ---------- output: shape + quality ---------- */
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.seg.seg-two { grid-template-columns: 1fr 1fr; }
+.seg button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 62px; padding: 8px 4px; border-radius: 14px; cursor: pointer;
+  background: var(--field); border: 1px solid var(--line); color: var(--muted); font: 600 11.5px/1.15 var(--font);
+  transition: border-color .15s, background .15s, color .15s;
+}
+.seg.seg-two button { min-height: 52px; gap: 2px; }
+.seg.seg-two button b { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
+.seg.seg-two button span { font-weight: 500; font-size: 11px; }
+.seg button:hover { border-color: var(--line-strong); color: var(--text); }
+.seg button[aria-checked="true"] { border-color: var(--pyro); background: rgba(251,105,12,.10); color: var(--text); box-shadow: 0 0 0 1px var(--pyro) inset; }
+.shape-ico { display: block; width: var(--w); height: var(--h); border: 1.5px solid currentColor; border-radius: 3px; }
+.seg button[aria-checked="true"] .shape-ico { border-color: var(--pyro); background: rgba(251,105,12,.25); }
+.px-note { margin: -4px 0 14px; color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.link { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.link:hover { color: var(--text); }
+.link[aria-pressed="true"] { color: var(--pyro); }
+
 /* ---------- templates ---------- */
 .block { margin-bottom: 18px; }
 .templates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

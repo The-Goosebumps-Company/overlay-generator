@@ -405,23 +405,69 @@ function applyState(s) {
 }
 
 // ---------- output settings ----------
+// Plain-language sizes: pick a shape and a quality; pixels are derived.
+const SHAPES = {
+  landscape: { ratio: [16, 9], label: 'Landscape 16:9', hint: 'YouTube, TV, screens and presentations.' },
+  portrait: { ratio: [9, 16], label: 'Portrait 9:16', hint: 'Reels, TikTok, Stories and Shorts.' },
+  square: { ratio: [1, 1], label: 'Square 1:1', hint: 'Instagram and LinkedIn feed posts.' },
+  feed: { ratio: [4, 5], label: 'Feed 4:5', hint: 'Instagram portrait posts.' },
+};
+const even = (n) => Math.round(n / 2) * 2;
+function sizeFor(shape, quality) {
+  const short = quality === '4k' ? 2160 : 1080;
+  const [a, b] = SHAPES[shape].ratio;
+  return a >= b ? [even(short * a / b), short] : [short, even(short * b / a)];
+}
+function detectSize(w, h) {
+  for (const shape of Object.keys(SHAPES)) for (const q of ['hd', '4k']) {
+    const [sw, sh] = sizeFor(shape, q);
+    if (sw === w && sh === h) return { shape, q };
+  }
+  return null;
+}
+let customSize = false;
 function syncOutputUI() {
-  const key = `${state.width}x${state.height}`;
-  const sel = $('resSelect');
-  sel.value = [...sel.options].some((o) => o.value === key) ? key : 'custom';
-  $('customRes').hidden = sel.value !== 'custom';
+  const found = detectSize(state.width, state.height);
+  if (!found) customSize = true;
+  const shape = !customSize && found ? found.shape : null;
+  const q = found ? found.q : (Math.min(state.width, state.height) >= 2160 ? '4k' : 'hd');
+  document.querySelectorAll('#shapeSeg button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.shape === shape)));
+  document.querySelectorAll('#qualitySeg button').forEach((b) => b.setAttribute('aria-checked', String(!customSize && b.dataset.quality === q)));
+  $('qualityRow').style.opacity = customSize ? 0.45 : '';
+  $('shapeHint').textContent = customSize ? 'Custom size. Pick a shape above to go back to the standard sizes.' : SHAPES[shape].hint;
+  $('pxNote').textContent = `${state.width} × ${state.height} px`;
+  $('customToggle').setAttribute('aria-pressed', String(customSize));
+  $('customRes').hidden = !customSize;
   $('resW').value = state.width; $('resH').value = state.height;
   $('fpsSelect').value = state.fps;
   $('durInput').value = state.duration;
 }
+function setSize(w, h) {
+  state.width = w; state.height = h;
+  syncOutputUI(); fitViewport(); changed();
+  log('info', 'edit', { control: 'output.size', value: `${w}x${h}` });
+}
 function setupOutput() {
   $('fpsSelect').innerHTML = Object.keys(FPS_OPTIONS).map((f) => `<option value="${f}">${f} fps</option>`).join('');
-  $('resSelect').onchange = () => {
-    const v = $('resSelect').value;
-    $('customRes').hidden = v !== 'custom';
-    if (v !== 'custom') { const [w, h] = v.split('x').map(Number); state.width = w; state.height = h; syncOutputUI(); fitViewport(); changed(); }
+  const currentQ = () => document.querySelector('#qualitySeg button[aria-checked="true"]')?.dataset.quality
+    || (Math.min(state.width, state.height) >= 2160 ? '4k' : 'hd');
+  document.querySelectorAll('#shapeSeg button').forEach((b) => {
+    b.onclick = () => { const q = currentQ(); customSize = false; setSize(...sizeFor(b.dataset.shape, q)); };
+  });
+  document.querySelectorAll('#qualitySeg button').forEach((b) => {
+    b.onclick = () => {
+      if (customSize) return;
+      const shape = detectSize(state.width, state.height)?.shape || 'landscape';
+      setSize(...sizeFor(shape, b.dataset.quality));
+    };
+  });
+  $('customToggle').onclick = () => {
+    customSize = !customSize;
+    if (!customSize) { const f = detectSize(state.width, state.height); if (!f) { setSize(1920, 1080); return; } }
+    syncOutputUI();
+    if (customSize) $('resW').focus();
   };
-  const custom = () => { state.width = Math.max(16, +$('resW').value || 1920); state.height = Math.max(16, +$('resH').value || 1080); fitViewport(); changed(); };
+  const custom = () => { setSize(Math.max(16, even(+$('resW').value || 1920)), Math.max(16, even(+$('resH').value || 1080))); };
   $('resW').onchange = custom; $('resH').onchange = custom;
   $('fpsSelect').onchange = () => { state.fps = $('fpsSelect').value; changed(); };
   $('durInput').onchange = () => { state.duration = Math.max(0.5, +$('durInput').value || 5); changed(); };
@@ -904,6 +950,14 @@ function setupTransport() {
   $('scrub').oninput = () => { playing = false; syncPlay(); t = ($('scrub').value / 1000) * state.duration; };
   $('undoBtn').onclick = undo;
   $('redoBtn').onclick = redo;
+  document.querySelectorAll('[role=radiogroup]').forEach((g) => g.addEventListener('keydown', (e) => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation();
+    const btns = [...g.querySelectorAll('button')];
+    const i = btns.indexOf(document.activeElement);
+    const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
+    next.focus(); next.click();
+  }));
   window.addEventListener('keydown', (e) => {
     const typing = e.target.matches('input[type=text], input[type=number], textarea');
     const mod = e.metaKey || e.ctrlKey;
