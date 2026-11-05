@@ -49,7 +49,7 @@ Keep that Mac awake while people use it. Change the port with `PORT=8080 npm sta
 | QuickTime Animation (.mov) | You want the same codec the design team used | Lossless but huge, and can stutter in Resolve |
 | PNG sequence (.zip) | No server, or another app | Works everywhere. Import as an image sequence |
 
-**DaVinci Resolve:** put the clip on a track above your footage. If the edges look dark, right-click → *Clip Attributes → Alpha mode → Straight*.
+**DaVinci Resolve:** put the clip on a track above your footage. It works as-is: .mov exports use premultiplied alpha, the same as After Effects ProRes 4444 renders and Resolve's default.
 **Premiere / After Effects:** transparency is picked up automatically.
 
 ## What's in it

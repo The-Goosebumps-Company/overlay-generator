@@ -1,6 +1,6 @@
 {
   "name": "overlay-generator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Self-serve animated title overlays with transparent backgrounds for video editors",
   "type": "module",
   "private": true,

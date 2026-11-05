@@ -468,6 +468,22 @@ function setExporting(on) {
 }
 const engineFor = (fmt) => (fmt === 'png' ? 'browser' : server.ffmpeg ? 'server' : 'browser-ffmpeg');
 
+// Video exports use PREMULTIPLIED alpha (colour × alpha, matted with black) — the
+// After Effects / ProRes 4444 convention the design team's files use. DaVinci Resolve,
+// Premiere, After Effects and players that ignore alpha all show it correctly.
+// PNG must stay straight (unpremultiplied) per the PNG spec.
+function premultiply(d) {
+  for (let i = 0; i < d.length; i += 4) {
+    const a = d[i + 3];
+    if (a === 255) continue;
+    if (a === 0) { d[i] = d[i + 1] = d[i + 2] = 0; continue; }
+    d[i] = (d[i] * a + 127) / 255 | 0;
+    d[i + 1] = (d[i + 1] * a + 127) / 255 | 0;
+    d[i + 2] = (d[i + 2] * a + 127) / 255 | 0;
+  }
+  return d;
+}
+
 /**
  * Render one overlay design to a file. Shared by single and batch export.
  * @returns {Promise<{blob: Blob, filename: string}>}
@@ -479,7 +495,8 @@ async function renderToFile(s, fmt, onProgress, base = nameFor(s)) {
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const octx = off.getContext('2d', { willReadFrequently: true });
-  const pixels = (n) => { checkCancel(); drawFrame(octx, s, n / fr.num, W, H); return octx.getImageData(0, 0, W, H).data; };
+  const straight = (n) => { checkCancel(); drawFrame(octx, s, n / fr.num, W, H); return octx.getImageData(0, 0, W, H).data; };
+  const pixels = fmt === 'png' ? straight : (n) => premultiply(straight(n));
   const name = `${base}_${W}x${H}_${s.fps}fps`;
   const movName = `${name}${fmt === 'prores' ? '_ProRes4444' : '_Animation'}.mov`;
 
