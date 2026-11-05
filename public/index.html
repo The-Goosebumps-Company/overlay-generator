@@ -3,104 +3,154 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Overlay Generator</title>
+<title>Overlay Generator · G&amp;G</title>
+<meta name="description" content="Make animated title overlays with transparent backgrounds for DaVinci Resolve, Premiere and After Effects.">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="theme-color" content="#171821">
+<meta name="theme-color" content="#071A26">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Overlays">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Krona+One&family=Lexend:wght@400;500;600;700;800;900&family=Michroma&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Unbounded:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Krona+One&family=Lexend:wght@400;500;600;700;800;900&family=Michroma&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Unbounded:wght@400;500;600;700;800;900&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="mesh" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="grain" aria-hidden="true"></div>
+
 <header class="topbar">
-  <div class="brand"><span class="logo"></span>Overlay Generator</div>
-  <div class="preset-bar">
-    <select id="presetSelect" aria-label="Preset"></select>
-    <button id="savePreset" title="Save current design as a preset everyone in the office can use">Save preset</button>
-    <button id="deletePreset" class="ghost" title="Delete selected shared preset">Delete</button>
-    <button id="exportJson" class="ghost" title="Download the design as a .json file">Download .json</button>
-    <label class="ghost btn" title="Load a design .json file">Open .json<input id="importJson" type="file" accept=".json,application/json" hidden></label>
+  <a class="brand" href="./" aria-label="Overlay Generator home">
+    <img src="brand/gg-icon-white.png" alt="G&amp;G" class="brand-mark" width="40" height="29">
+    <span class="brand-text">
+      <span class="brand-name">Overlay Generator</span>
+      <span class="brand-sub">The Goosebumps Company</span>
+    </span>
+  </a>
+  <div class="top-actions">
+    <select id="presetSelect" aria-label="Template" class="visually-hidden-select"></select>
+    <button id="savePreset" class="btn ghost" title="Save this design as a template"><i data-icon="save"></i><span>Save template</span></button>
+    <button id="deletePreset" class="btn ghost icon-only" title="Delete the selected template" aria-label="Delete template"><i data-icon="trash"></i></button>
+    <button id="exportJson" class="btn ghost icon-only" title="Download this design as a .json file" aria-label="Download design file"><i data-icon="download"></i></button>
+    <label class="btn ghost icon-only" title="Open a design .json file" aria-label="Open design file"><i data-icon="folder"></i><input id="importJson" type="file" accept=".json,application/json" hidden></label>
   </div>
-  <button id="installBtn" class="ghost" hidden title="Install as an app on this computer">⤓ Install app</button>
-  <div id="serverStatus" class="pill">checking…</div>
+  <button id="installBtn" class="btn ghost" hidden title="Install as an app on this computer"><i data-icon="install"></i><span>Install app</span></button>
+  <div id="serverStatus" class="status" role="status">Checking…</div>
 </header>
 
 <main class="layout">
-  <aside class="panel controls" id="controls"></aside>
+  <aside class="panel controls" aria-label="Design">
+    <section class="block">
+      <h2 class="eyebrow">Templates</h2>
+      <div id="templates" class="templates" role="listbox" aria-label="Templates"></div>
+    </section>
+    <div id="controls"></div>
+  </aside>
 
-  <section class="stage">
+  <section class="stage" aria-label="Preview">
     <div class="viewport-wrap" id="viewportWrap">
       <div class="viewport bg-checker" id="viewport">
         <img id="bgImage" alt="" hidden>
         <video id="bgVideo" muted loop playsinline hidden></video>
-        <canvas id="preview"></canvas>
+        <canvas id="preview" aria-label="Overlay preview"></canvas>
       </div>
     </div>
-    <div class="transport">
-      <button id="playBtn" class="icon" aria-label="Play/pause">❚❚</button>
-      <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Timeline">
-      <span id="timecode" class="mono">00:00</span>
-      <select id="bgSelect" aria-label="Preview background">
-        <option value="checker">Checker</option>
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-        <option value="green">Green</option>
-        <option value="media">Your footage…</option>
-      </select>
+    <div class="transport glass">
+      <button id="playBtn" class="btn round" aria-label="Pause"><i data-icon="pause"></i></button>
+      <div class="scrub-wrap">
+        <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Timeline">
+        <div class="markers" id="markers" aria-hidden="true"></div>
+      </div>
+      <span id="timecode" class="mono">00:00 / 00:00</span>
+      <span class="sep" aria-hidden="true"></span>
+      <button id="undoBtn" class="btn ghost icon-only" title="Undo (⌘Z)" aria-label="Undo" disabled><i data-icon="undo"></i></button>
+      <button id="redoBtn" class="btn ghost icon-only" title="Redo (⇧⌘Z)" aria-label="Redo" disabled><i data-icon="redo"></i></button>
+      <button id="resetBtn" class="btn ghost icon-only" title="Reset to the selected template" aria-label="Reset to template"><i data-icon="reset"></i></button>
+      <span class="sep" aria-hidden="true"></span>
+      <label class="bg-pick" title="Preview background">
+        <i data-icon="image"></i>
+        <select id="bgSelect" aria-label="Preview background">
+          <option value="checker">Transparent</option>
+          <option value="dark">Black</option>
+          <option value="light">White</option>
+          <option value="green">Green</option>
+          <option value="media">Your footage…</option>
+        </select>
+      </label>
       <input id="bgFile" type="file" accept="image/*,video/*" hidden>
     </div>
-    <div class="markers" id="markers"></div>
   </section>
 
-  <aside class="panel export">
-    <h3>Output</h3>
-    <label class="row">Size
-      <select id="resSelect">
-        <option value="1920x1080">1920 × 1080 (16:9 HD)</option>
-        <option value="3840x2160">3840 × 2160 (16:9 4K)</option>
-        <option value="1080x1080">1080 × 1080 (1:1)</option>
-        <option value="1080x1350">1080 × 1350 (4:5)</option>
-        <option value="1080x1920">1080 × 1920 (9:16)</option>
-        <option value="2160x3840">2160 × 3840 (9:16 4K)</option>
-        <option value="custom">Custom…</option>
-      </select>
-    </label>
-    <div class="row two" id="customRes" hidden>
-      <input type="number" id="resW" min="16" max="7680" step="2" aria-label="Width">
-      <input type="number" id="resH" min="16" max="7680" step="2" aria-label="Height">
+  <aside class="panel export" aria-label="Output and export">
+    <div class="export-scroll">
+      <h2 class="eyebrow">Output</h2>
+      <label class="row">Size
+        <select id="resSelect">
+          <option value="1920x1080">1920 × 1080 · 16:9 HD</option>
+          <option value="3840x2160">3840 × 2160 · 16:9 4K</option>
+          <option value="1080x1080">1080 × 1080 · 1:1</option>
+          <option value="1080x1350">1080 × 1350 · 4:5</option>
+          <option value="1080x1920">1080 × 1920 · 9:16</option>
+          <option value="2160x3840">2160 × 3840 · 9:16 4K</option>
+          <option value="custom">Custom…</option>
+        </select>
+      </label>
+      <div class="row two" id="customRes" hidden>
+        <label>Width<input type="number" id="resW" min="16" max="7680" step="2"></label>
+        <label>Height<input type="number" id="resH" min="16" max="7680" step="2"></label>
+      </div>
+      <div class="row two">
+        <label>Frame rate<select id="fpsSelect"></select></label>
+        <label>Length (s)<input type="number" id="durInput" min="0.5" max="120" step="0.1"></label>
+      </div>
+
+      <h2 class="eyebrow">Export</h2>
+      <label class="row">Format
+        <select id="formatSelect">
+          <option value="prores">ProRes 4444 + alpha · .mov</option>
+          <option value="qtrle">QuickTime Animation + alpha · .mov</option>
+          <option value="png">PNG sequence · .zip</option>
+        </select>
+      </label>
+      <p class="hint" id="formatHint"></p>
+
+      <details class="help">
+        <summary>Using it in Resolve, Premiere or After Effects</summary>
+        <p><b>Premiere / After Effects:</b> drop the .mov on a track above your footage. Transparency just works.</p>
+        <p><b>DaVinci Resolve:</b> put it on V2. Dark edges? Right-click the clip → <i>Clip Attributes → Alpha mode → Straight</i>.</p>
+        <p><b>PNG sequence:</b> unzip and import the first frame as an image sequence.</p>
+      </details>
     </div>
-    <label class="row">Frame rate
-      <select id="fpsSelect"></select>
-    </label>
-    <label class="row">Duration (s)
-      <input type="number" id="durInput" min="0.5" max="120" step="0.1">
-    </label>
-    <h3>Export</h3>
-    <label class="row">Format
-      <select id="formatSelect">
-        <option value="prores">ProRes 4444 + alpha (.mov)</option>
-        <option value="qtrle">QuickTime Animation + alpha (.mov)</option>
-        <option value="png">PNG sequence (.zip)</option>
-      </select>
-    </label>
-    <p class="hint" id="formatHint"></p>
-    <button id="exportBtn" class="primary wide">Export overlay</button>
-    <button id="stillBtn" class="wide">Save current frame (.png)</button>
-    <div class="progress" id="progress" hidden><div class="bar" id="progressBar"></div><span id="progressText"></span></div>
-    <details class="help">
-      <summary>Using it in DaVinci / Adobe</summary>
-      <p><b>Premiere / After Effects:</b> import the .mov and drop it on a track above your footage. Transparency is detected automatically.</p>
-      <p><b>DaVinci Resolve:</b> import the .mov and place it on V2. If edges look dark, right-click the clip → <i>Clip Attributes → Alpha mode → Straight</i>.</p>
-      <p><b>PNG sequence:</b> unzip, then import the first frame as an image sequence. It works in every app and needs no server.</p>
-    </details>
+
+    <div class="export-footer">
+      <div class="progress" id="progress" hidden>
+        <div class="bar" id="progressBar"></div>
+        <span id="progressText"></span>
+      </div>
+      <div class="export-actions">
+        <button id="exportBtn" class="btn primary wide"><i data-icon="film"></i><span>Export overlay</span></button>
+        <button id="cancelBtn" class="btn ghost wide" hidden><i data-icon="x"></i><span>Cancel</span></button>
+      </div>
+      <button id="stillBtn" class="btn ghost wide small"><i data-icon="image"></i><span>Save this frame as PNG</span></button>
+    </div>
   </aside>
 </main>
 
-<template id="toast"><div class="toast"></div></template>
+<dialog id="dialog" class="dialog" aria-labelledby="dialogTitle">
+  <form method="dialog" id="dialogForm">
+    <h2 class="eyebrow" id="dialogEyebrow">Template</h2>
+    <p class="dialog-title" id="dialogTitle"></p>
+    <p class="dialog-body" id="dialogBody"></p>
+    <input type="text" id="dialogInput" autocomplete="off" hidden>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" id="dialogCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="dialogOk" value="ok">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<template id="toast"><div class="toast" role="status"></div></template>
 <script type="module" src="app.js"></script>
 </body>
 </html>

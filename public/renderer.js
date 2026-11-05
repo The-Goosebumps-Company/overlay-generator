@@ -19,9 +19,9 @@ export const BASE = {
   anim: { in: true, out: true, inDur: 1.4, outDur: 0.9, inStyle: 'line', outStyle: 'line', textStyle: 'cascade' },
   layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
   text: {
-    content: 'YOUR TITLE\nGOES HERE', uppercase: true, font: 'Krona One', weight: 400,
+    content: 'Your title\ngoes here', uppercase: false, font: 'Bricolage Grotesque', weight: 800,
     size: 56, lineHeight: 1.2, tracking: 0.02, color: '#f2f2f2', align: 'center',
-    revealTint: '#d9cf9a', shadow: 0,
+    revealTint: '#FB690C', shadow: 0,
   },
   card: {
     padX: 56, padY: 56, minWidth: 0, minHeight: 0, radius: 22,

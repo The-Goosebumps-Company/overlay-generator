@@ -25,6 +25,14 @@ export function loadEncoder() {
   return loading;
 }
 
+// Stop an encode in progress: kills the encoder worker (it reloads on the next export).
+export function cancelEncode() {
+  if (!ffmpeg && !loading) return;
+  try { ffmpeg?.terminate(); } catch {}
+  ffmpeg = null;
+  loading = null;
+}
+
 const CODECS = {
   prores: ['-c:v', 'prores_ks', '-profile:v', '4444', '-pix_fmt', 'yuva444p10le', '-alpha_bits', '16', '-vendor', 'apl0'],
   qtrle: ['-c:v', 'qtrle', '-pix_fmt', 'argb'],

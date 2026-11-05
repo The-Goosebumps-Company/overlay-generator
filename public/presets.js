@@ -1,6 +1,36 @@
-// Built-in starting points, modelled on the design team's overlay style.
+// Built-in templates: G&G brand looks first, then general-purpose styles.
 // Shared presets saved by colleagues are loaded from the server on top of these.
 export const BUILTIN_PRESETS = [
+  {
+    name: 'G&G · Pyro title',
+    width: 1920, height: 1080, fps: '25', duration: 5,
+    anim: { in: true, out: true, inDur: 1.4, outDur: 0.9, inStyle: 'line', outStyle: 'line', textStyle: 'cascade' },
+    layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
+    text: { content: 'Unforgettable\nGoosebumps.', uppercase: false, font: 'Bricolage Grotesque', weight: 800, size: 112, lineHeight: 0.96, tracking: -0.025, color: '#ffffff', align: 'center', revealTint: '#FB690C', shadow: 0 },
+    card: { padX: 110, padY: 84, minWidth: 0, minHeight: 0, radius: 32, colors: ['#FB690C', '#790000'], angle: 135, opacity: 0.95, glow: 96, softness: 0.8, fill: '#071A26', fillOpacity: 0.2 },
+    blobs: { enabled: true, colors: ['#FB690C', '#FFB36B'], count: 3, size: 0.38, speed: 0.9, intensity: 0.85 },
+    badge: { enabled: false, text: '21:30', size: 64, weight: 800, padX: 40, padY: 16, radius: 14, gap: 30, colors: ['#FB690C', '#790000'], angle: 135, glow: 30, opacity: 1, scramble: true },
+  },
+  {
+    name: 'G&G · Frequency lower third',
+    width: 1920, height: 1080, fps: '25', duration: 6,
+    anim: { in: true, out: true, inDur: 1.2, outDur: 0.8, inStyle: 'line', outStyle: 'line', textStyle: 'words' },
+    layout: { anchor: 'bottom-left', offsetX: 0, offsetY: -3, scale: 1, safe: 6, autoFit: true },
+    text: { content: 'Speaker name\nRole, Company', uppercase: false, font: 'Bricolage Grotesque', weight: 700, size: 50, lineHeight: 1.12, tracking: -0.015, color: '#ffffff', align: 'left', revealTint: '#FB690C', shadow: 0 },
+    card: { padX: 52, padY: 38, minWidth: 0, minHeight: 0, radius: 24, colors: ['#0B6F88', '#044E61', '#071A26'], angle: 135, opacity: 1, glow: 52, softness: 0.9, fill: '#071A26', fillOpacity: 0.45 },
+    blobs: { enabled: true, colors: ['#FB690C'], count: 1, size: 0.55, speed: 0.8, intensity: 0.7 },
+    badge: { enabled: false, text: '21:30', size: 60, weight: 800, padX: 36, padY: 14, radius: 12, gap: 28, colors: ['#FB690C', '#790000'], angle: 135, glow: 28, opacity: 1, scramble: true },
+  },
+  {
+    name: 'G&G · Schedule with time',
+    width: 1920, height: 1080, fps: '25', duration: 5.5,
+    anim: { in: true, out: true, inDur: 1.8, outDur: 0.9, inStyle: 'line', outStyle: 'line', textStyle: 'cascade' },
+    layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
+    text: { content: 'Main stage\nSunset session\nft. Guest artist', uppercase: false, font: 'Bricolage Grotesque', weight: 800, size: 92, lineHeight: 1.0, tracking: -0.02, color: '#ffffff', align: 'center', revealTint: '#FB690C', shadow: 0 },
+    card: { padX: 140, padY: 100, minWidth: 0, minHeight: 0, radius: 32, colors: ['#0B6F88', '#044E61', '#071A26'], angle: 135, opacity: 0.95, glow: 100, softness: 0.8, fill: '#071A26', fillOpacity: 0.25 },
+    blobs: { enabled: true, colors: ['#0B6F88', '#FB690C'], count: 2, size: 0.3, speed: 0.8, intensity: 0.6 },
+    badge: { enabled: true, text: '21:30', size: 100, weight: 800, padX: 80, padY: 26, radius: 18, gap: 44, colors: ['#FB690C', '#790000'], angle: 135, glow: 40, opacity: 1, scramble: true },
+  },
   {
     name: 'Blue glass title (1080×1080)',
     width: 1080, height: 1080, fps: '29.97', duration: 3.5,
