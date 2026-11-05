@@ -25,6 +25,18 @@ await fsp.rm(DIST, { recursive: true, force: true });
 // ---------- 1. static web app (PWA) ----------
 const WEB = path.join(DIST, 'web');
 await copy(path.join(ROOT, 'public'), WEB);
+// Cache-busting: every app file reference carries the build version, so a fresh page
+// can never be combined with an older cached script or stylesheet.
+const V = encodeURIComponent(VERSION);
+const idx = path.join(WEB, 'index.html');
+fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8')
+  .replace('href="style.css"', `href="style.css?v=${V}"`)
+  .replace('src="app.js"', `src="app.js?v=${V}"`)
+  .replace('<meta name="theme-color"', `<meta name="app-version" content="${VERSION}">\n<meta name="theme-color"`));
+for (const f of fs.readdirSync(WEB).filter((x) => x.endsWith('.js') && x !== 'sw.js')) {
+  const fp = path.join(WEB, f);
+  fs.writeFileSync(fp, fs.readFileSync(fp, 'utf8').replace(/(from\s+'\.\/[\w\-/]+\.js)'/g, `$1?v=${V}'`));
+}
 const swPath = path.join(WEB, 'sw.js');
 fs.writeFileSync(swPath, fs.readFileSync(swPath, 'utf8').replace("const VERSION = 'dev';", `const VERSION = '${VERSION}';`));
 

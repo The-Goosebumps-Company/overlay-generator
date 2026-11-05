@@ -12,7 +12,9 @@ const SHELL_FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(SHELL)
+    .then((c) => c.addAll(SHELL_FILES.map((f) => new Request(f, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -56,7 +58,8 @@ async function cacheFirst(req, name) {
 async function networkFirst(req) {
   const cache = await caches.open(SHELL);
   try {
-    const res = await fetch(req);
+    // 'no-cache' = always check with the server (ETag), so a new page never gets old scripts
+    const res = await fetch(req, { cache: 'no-cache' });
     if (res.ok) cache.put(req, res.clone());
     return res;
   } catch {

@@ -906,12 +906,12 @@ function setupBackground() {
 }
 
 // ---------- misc ----------
-function toast(msg) {
+function toast(msg, ms = 4000) {
   document.querySelectorAll('.toast').forEach((el) => el.remove());
   const el = $('toast').content.firstElementChild.cloneNode(true);
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => el.remove(), ms);
 }
 async function checkServer(initial = false) {
   const pill = $('serverStatus');
@@ -1021,4 +1021,20 @@ async function init() {
   fitViewport();
   requestAnimationFrame(loop);
 }
-init();
+// If startup fails (e.g. a half-updated install), clear the app cache and reload once
+// instead of hanging on "Checking…". A second failure shows a clear message.
+async function recover(e) {
+  log('error', 'init.failed', errInfo(e));
+  const KEY = 'og-recovered';
+  if (!sessionStorage.getItem(KEY)) {
+    sessionStorage.setItem(KEY, String(Date.now()));
+    try { for (const k of await caches.keys()) if (k.startsWith('og-shell-')) await caches.delete(k); } catch {}
+    try { const reg = await navigator.serviceWorker?.getRegistration(); await reg?.update(); } catch {}
+    location.reload();
+    return;
+  }
+  const pill = $('serverStatus');
+  if (pill) { pill.textContent = 'Couldn’t start'; pill.className = 'status bad'; }
+  toast('The app couldn’t start. Close it and open it again. If that doesn’t help, press ⌘⇧R.', 60000);
+}
+init().then(() => setTimeout(() => sessionStorage.removeItem('og-recovered'), 5000), recover);
