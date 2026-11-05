@@ -18,7 +18,7 @@
 
 ---
 
-**Current version: 1.3.1.** See the [releases](https://github.com/The-Goosebumps-Company/overlay-generator/releases) and the [changelog](CHANGELOG.md).
+**Current version: 1.4.0.** See the [releases](https://github.com/The-Goosebumps-Company/overlay-generator/releases) and the [changelog](CHANGELOG.md).
 
 Pick a template, type your text and export. You get a ProRes 4444 `.mov` with alpha that animates in, holds and animates out, ready to drop on a track above your footage. The design team sets up templates once, and editors make as many overlays as they need.
 
@@ -62,6 +62,8 @@ The Mac installer needs no admin password and no Apple signing: it builds the ap
 Fine-tune anything you like: font, size, colours (the G&G swatches are one click away), the glow, moving light, a badge such as a time, the animation styles and the position. **Undo** (⌘Z), **Redo** (⇧⌘Z) and **Reset to template** are in the bar under the preview. Use **Save template** to keep a look for later.
 
 Preview over a checkerboard, black, white, green or **your own footage** with the background picker under the preview.
+
+**Safe zones:** the picker next to it (the dashed-corner icon) shows where each app's buttons, captions and bars will cover your video: Instagram Reels, TikTok, YouTube Shorts, Stories, Facebook Reels, LinkedIn, the YouTube player, Instagram feed or TV title safe. Your overlay's box turns orange if something covers it, and **Move it inside** fixes that in one click. Safe zones are only shown in the preview, never exported. The margins come from Meta's Reels/Stories guidance and measured app layouts; apps change their UI, so treat them as a guide.
 
 ### Batch export from a list
 

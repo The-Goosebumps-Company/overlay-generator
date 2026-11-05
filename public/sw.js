@@ -5,7 +5,7 @@ const SHELL = `og-shell-${VERSION}`;
 const RUNTIME = 'og-runtime'; // fonts + the 32 MB encoder; survives app updates
 
 const SHELL_FILES = [
-  './', 'index.html', 'style.css', 'app.js', 'renderer.js', 'zip.js', 'presets.js', 'log.js', 'encode-wasm.js', 'fonts-store.js',
+  './', 'index.html', 'style.css', 'app.js', 'renderer.js', 'zip.js', 'presets.js', 'log.js', 'encode-wasm.js', 'fonts-store.js', 'safezones.js',
   'manifest.webmanifest', 'brand/gg-icon-white.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
   'vendor/ffmpeg/index.js', 'vendor/ffmpeg/classes.js', 'vendor/ffmpeg/worker.js', 'vendor/ffmpeg/const.js',
   'vendor/ffmpeg/errors.js', 'vendor/ffmpeg/utils.js', 'vendor/ffmpeg/types.js', 'vendor/ffmpeg/ffmpeg-core.js',

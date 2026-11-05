@@ -31,6 +31,7 @@ public/                 The app (everything the browser loads)
   zip.js                Fast PNG encoder, gzip and a store-only ZIP writer
   log.js                Client logging (console + server log when available)
   fonts-store.js        Keeps uploaded fonts in IndexedDB (no-server mode)
+  safezones.js          Platform safe zones: margins + skeleton UI drawn as SVG over the preview
   sw.js                 Service worker: offline support and caching
   vendor/ffmpeg/        ffmpeg.wasm 0.12.10 (wrapper + 32 MB core)
   brand/, icons/        G&G logo and app icons
@@ -59,6 +60,8 @@ The live preview and the export call the same function, so what you see is what 
 | **.mov without a server** | Frames go to ffmpeg.wasm in the browser. About 50 s for a 5-second 1080p overlay. |
 
 **Alpha:** `.mov` frames are **premultiplied** before encoding (`premultiply()` in `app.js`), matching After Effects ProRes 4444 renders. PNG frames stay straight. Don't change this: straight alpha in a `.mov` shows as a hard-edged colour band in Resolve and in players that ignore alpha.
+
+**Safe zones** (`safezones.js`) are an SVG layer over the preview canvas, never passed to `drawFrame`, so they can't end up in an export. Margins are on a 1080-wide reference and scale with the frame's short side. `computeLayout()` gives the overlay's box to check against the safe rectangle; *Move it inside* adjusts `layout.offsetX/Y` (and `scale` if it doesn't fit).
 
 **Batch export** runs `renderToFile()` once per row. In Chrome and Edge it writes files through the File System Access API (`showDirectoryPicker`); elsewhere it downloads them one by one.
 

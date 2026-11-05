@@ -2,6 +2,12 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.4.0 · Social safe zones
+- **Safe zones** in the preview for Instagram Reels, TikTok, YouTube Shorts, Instagram & Facebook Stories, Facebook Reels, LinkedIn video, the YouTube player, LinkedIn and Instagram feed, and TV title safe (90%).
+- Each one shows a skeleton of the app's buttons, captions and bars over your preview, so you can see what will be covered. It's never part of the export.
+- A note under the preview tells you whether your overlay is clear. If it isn't, **Move it inside** nudges (and if needed shrinks) it into the safe area. ⌘Z undoes it.
+- Only the platforms that fit the current shape are listed, and your choice is remembered per shape.
+
 ## 1.3.1 · Reliable updates
 - **Fixed:** reloading the installed app right after an update could combine the new page with an old cached script, so the app hung on *Checking…* with no templates.
 - Every build now stamps its version on all script and stylesheet links, and the offline cache always checks with the server for the latest copy.

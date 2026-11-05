@@ -54,7 +54,12 @@
         <img id="bgImage" alt="" hidden>
         <video id="bgVideo" muted loop playsinline hidden></video>
         <canvas id="preview" aria-label="Overlay preview"></canvas>
+        <div id="safeLayer" class="safe-layer" hidden></div>
       </div>
+    </div>
+    <div id="safeNote" class="safe-note" role="status" hidden>
+      <span class="safe-dot" aria-hidden="true"></span><span id="safeNoteText"></span>
+      <button type="button" class="btn small" id="safeFix"><i data-icon="move"></i><span>Move it inside</span></button>
     </div>
     <div class="transport glass">
       <button id="playBtn" class="btn round" aria-label="Pause"><i data-icon="pause"></i></button>
@@ -79,6 +84,10 @@
         </select>
       </label>
       <input id="bgFile" type="file" accept="image/*,video/*" hidden>
+      <label class="bg-pick safe-pick" title="Show where each app's buttons and captions cover your video. Only shown here, never exported.">
+        <i data-icon="scan"></i>
+        <select id="safeSelect" aria-label="Safe zones"></select>
+      </label>
     </div>
   </section>
 

@@ -1,4 +1,5 @@
-import { drawFrame, normalize, FPS_OPTIONS, fontStr } from './renderer.js';
+import { drawFrame, normalize, FPS_OPTIONS, fontStr, computeLayout } from './renderer.js';
+import { zonesFor, shapeGroup, safeRect, conflicts, zoneSVG } from './safezones.js';
 import { makeZip, encodePNG, gzip } from './zip.js';
 import { BUILTIN_PRESETS } from './presets.js';
 import { log, errInfo, setRemoteLogging } from './log.js';
@@ -35,6 +36,8 @@ const ICON_PATHS = {
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
   minus: '<path d="M5 12h14"/>',
+  scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>',
+  move: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
   list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ''}</svg>`;
@@ -324,6 +327,7 @@ function fitViewport() {
   canvas.height = Math.round(canvas.width * state.height / state.width);
   drawMarkers();
   render();
+  drawSafeZones();
 }
 function render() { drawFrame(ctx, state, t, state.width, state.height); }
 
@@ -386,11 +390,12 @@ function changed() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => localStorage.setItem('og-current', JSON.stringify(state)), 300);
   clearTimeout(fontTimer);
-  fontTimer = setTimeout(() => ensureFonts().then(render), 50);
+  fontTimer = setTimeout(() => ensureFonts().then(() => { render(); drawSafeZones(); }), 50);
   clearTimeout(histTimer);
   histTimer = setTimeout(pushHistory, 400);
   drawMarkers();
   render();
+  drawSafeZones();
 }
 function loadCurrent() { try { const s = JSON.parse(localStorage.getItem('og-current')); return s ? normalize(s) : null; } catch { return null; } }
 
@@ -887,6 +892,77 @@ function setupTemplates() {
   };
 }
 
+// ---------- social safe zones (preview only, never exported) ----------
+let safeChoice = {};
+try { safeChoice = JSON.parse(localStorage.getItem('og-safe') || '{}') || {}; } catch {}
+let safeGroupShown = null;
+const measureCtx = document.createElement('canvas').getContext('2d');
+function cardBox(s = state) {
+  const L = computeLayout(measureCtx, s, s.width, s.height);
+  return { x: L.card.x * L.u, y: L.card.y * L.u, w: L.card.w * L.u, h: L.card.h * L.u };
+}
+function currentZone() {
+  const id = safeChoice[shapeGroup(state.width, state.height)];
+  return zonesFor(state.width, state.height).find((z) => z.id === id) || null;
+}
+function syncSafeSelect() {
+  const group = shapeGroup(state.width, state.height);
+  safeGroupShown = group;
+  const opts = zonesFor(state.width, state.height).map((z) => `<option value="${z.id}">${z.label}</option>`).join('');
+  $('safeSelect').innerHTML = `<option value="">Safe zones: off</option>${opts}`;
+  $('safeSelect').value = currentZone()?.id || '';
+}
+function drawSafeZones() {
+  if (shapeGroup(state.width, state.height) !== safeGroupShown) syncSafeSelect();
+  const z = currentZone();
+  const layer = $('safeLayer'), note = $('safeNote');
+  $('safeSelect').closest('.bg-pick').classList.toggle('on', !!z);
+  if (!z) { layer.hidden = true; layer.innerHTML = ''; note.hidden = true; return; }
+  const W = state.width, H = state.height;
+  let box = null, hits = [];
+  try { box = cardBox(); hits = conflicts(z, box, W, H); } catch (e) { log('warn', 'safezone.layout', errInfo(e)); }
+  layer.innerHTML = zoneSVG(z, W, H, box, !hits.length);
+  layer.hidden = false;
+  note.hidden = false;
+  note.className = `safe-note ${hits.length ? 'bad' : 'ok'}`;
+  const list = hits.length > 1 ? `${hits.slice(0, -1).join(', ')} and ${hits.at(-1)}` : hits[0];
+  $('safeNoteText').textContent = hits.length
+    ? `Part of your overlay sits under ${list} on ${z.label}.`
+    : z.id === 'title' ? 'Inside the title-safe area.' : `Clear of ${z.name}’s buttons and captions.`;
+  $('safeFix').hidden = !hits.length;
+}
+function moveInside() {
+  const z = currentZone(); if (!z) return;
+  const W = state.width, H = state.height, k = Math.min(W, H) / 1080;
+  const s = safeRect(z, W, H);
+  const pad = 6 * k;
+  const L = state.layout;
+  for (let i = 0; i < 6; i++) {
+    const b = cardBox();
+    const f = Math.min(1, (s.w - pad * 2) / b.w, (s.h - pad * 2) / b.h);
+    if (f < 0.999) { L.scale = Math.max(0.2, +(L.scale * f).toFixed(3)); continue; }
+    const dx = b.x < s.x + pad ? s.x + pad - b.x : b.x + b.w > s.x + s.w - pad ? s.x + s.w - pad - (b.x + b.w) : 0;
+    const dy = b.y < s.y + pad ? s.y + pad - b.y : b.y + b.h > s.y + s.h - pad ? s.y + s.h - pad - (b.y + b.h) : 0;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) break;
+    L.offsetX = Math.max(-50, Math.min(50, +(L.offsetX + (dx / W) * 100).toFixed(2)));
+    L.offsetY = Math.max(-50, Math.min(50, +(L.offsetY + (dy / H) * 100).toFixed(2)));
+  }
+  log('info', 'safezone.fit', { zone: z.id, scale: L.scale, x: L.offsetX, y: L.offsetY });
+  syncControls();
+  changed();
+  toast(`Moved inside the ${z.label} safe zone. Undo (⌘Z) puts it back.`);
+}
+function setupSafeZones() {
+  syncSafeSelect();
+  $('safeSelect').onchange = () => {
+    safeChoice[shapeGroup(state.width, state.height)] = $('safeSelect').value;
+    try { localStorage.setItem('og-safe', JSON.stringify(safeChoice)); } catch {}
+    log('info', 'safezone', { zone: $('safeSelect').value || 'off' });
+    drawSafeZones();
+  };
+  $('safeFix').onclick = moveInside;
+}
+
 // ---------- background ----------
 function setupBackground() {
   const vp = $('viewport');
@@ -1001,6 +1077,7 @@ async function init() {
   syncOutputUI();
   setupTemplates();
   setupBackground();
+  setupSafeZones();
   setupTransport();
   syncPlay();
   $('exportBtn').onclick = exportOverlay;
