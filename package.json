@@ -1,0 +1,14 @@
+{
+  "name": "overlay-generator",
+  "version": "1.0.0",
+  "description": "Self-serve animated title overlays with transparent backgrounds for video editors",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,36 @@
+OVERLAY GENERATOR: HOW TO INSTALL (Mac)
+=======================================
+
+Takes about 1 minute. No admin password needed.
+
+1. Open the Terminal app (press Cmd+Space, type "Terminal", press Enter).
+
+2. Type   bash   followed by a space.
+
+3. Drag the file "install.sh" from this folder into the Terminal window,
+   then press Enter.
+
+   (Why not just double-click? The app isn't signed by Apple, so macOS blocks
+   double-clicked scripts from the internet. Running it this way is safe and
+   normal, and you only need to do it once.)
+
+4. When it says "Installed!", the app opens. From now on, open
+   "Overlay Generator" from Launchpad or Spotlight like any other app.
+   Tip: drag it to your Dock.
+
+You need an internet connection the first time only. After that it works offline.
+
+UPDATING
+Get the new zip and repeat the steps above. Your saved presets and fonts are kept.
+
+UNINSTALLING
+Same as installing, but drag "uninstall.sh" instead.
+
+USING THE OVERLAYS
+- Premiere / After Effects: import the .mov and place it above your footage.
+- DaVinci Resolve: import the .mov and place it on V2. If the edges look dark,
+  right-click the clip → Clip Attributes → Alpha mode → Straight.
+
+TROUBLESHOOTING
+Logs are in:  ~/Library/Application Support/Overlay Generator/logs/app.log
+Send that file to whoever gave you the app.
