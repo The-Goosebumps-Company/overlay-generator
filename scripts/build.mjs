@@ -65,7 +65,7 @@ fs.chmodSync(path.join(PKG, 'uninstall.sh'), 0o755);
 fs.writeFileSync(path.join(PKG, 'VERSION.txt'), `${VERSION}\n`);
 
 const zip = path.join(DIST, 'Overlay Generator (Mac).zip');
-execFileSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', PKG, zip]);
+execFileSync('ditto', ['-c', '-k', '--norsrc', '--noextattr', '--noqtn', '--keepParent', PKG, zip]);
 
 const mb = (p) => (fs.statSync(p).size / 1e6).toFixed(1);
 console.log(`\nBuilt Overlay Generator ${VERSION}`);
