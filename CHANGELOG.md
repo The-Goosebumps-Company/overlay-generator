@@ -2,6 +2,12 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.5.0 · Event libraries
+- **Event libraries:** pick an event above the templates (G&G, Big Week, Rage Festival, Luxurious Marble Circus, Shimza & Friends) to see its templates. The colour swatches and gradients switch to that event's palette.
+- Three templates per event (title, lower third and a set-time or countdown card), styled from each event's artwork and style guide. LMC uses its official colours and Josefin Sans.
+- **Save template** files new designs under the event that's open.
+- **Resolve:** if an overlay shows a black background, set Media Pool → Clip Attributes → Video → Alpha Mode to Premultiplied. The file is fine; Resolve sometimes doesn't detect the alpha. The steps are now in the app's help and the README.
+
 ## 1.4.0 · Social safe zones
 - **Safe zones** in the preview for Instagram Reels, TikTok, YouTube Shorts, Instagram & Facebook Stories, Facebook Reels, LinkedIn video, the YouTube player, LinkedIn and Instagram feed, and TV title safe (90%).
 - Each one shows a skeleton of the app's buttons, captions and bars over your preview, so you can see what will be covered. It's never part of the export.
@@ -20,7 +26,7 @@ Each release has a Mac zip attached on the [releases page](https://github.com/Th
 
 ## 1.2.1 · Alpha fix
 - **Fixed:** `.mov` exports now use **premultiplied alpha**, the same as After Effects ProRes 4444 renders and the design team's files. Before, Resolve and players that ignore transparency showed a hard-edged colour band instead of the soft glow.
-- Resolve no longer needs its alpha mode changed. PNG sequences stay straight, as the PNG format requires.
+- PNG sequences stay straight, as the PNG format requires. (If Resolve shows a black background, set Clip Attributes → Alpha Mode to Premultiplied; see the README.)
 
 ## 1.2.0 · Batch export
 - **Batch export from a list:** paste rows (straight from Google Sheets or Excel) to get one overlay per row. Columns become lines, and the first column can be the badge (e.g. a time).

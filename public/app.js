@@ -1,4 +1,5 @@
 import { drawFrame, normalize, FPS_OPTIONS, fontStr, computeLayout } from './renderer.js';
+import { EVENTS, GENERAL, eventById, eventLabel, palette } from './events.js';
 import { zonesFor, shapeGroup, safeRect, conflicts, zoneSVG } from './safezones.js';
 import { makeZip, encodePNG, gzip } from './zip.js';
 import { BUILTIN_PRESETS } from './presets.js';
@@ -8,15 +9,10 @@ import { saveFont, listFonts } from './fonts-store.js';
 
 const $ = (id) => document.getElementById(id);
 
-// ---------- brand ----------
-const BRAND_COLORS = [
-  ['Pyro Amber', '#FB690C'], ['Crimson Surge', '#790000'], ['Aqua Beam', '#044E61'],
-  ['Backline Blue', '#071A26'], ['White', '#FFFFFF'], ['Black', '#000000'],
-];
-const BRAND_GRADIENTS = {
-  card: [['Pyro', ['#FB690C', '#790000']], ['Frequency', ['#0B6F88', '#044E61', '#071A26']], ['Pyro → Aqua', ['#FB690C', '#044E61']]],
-  blobs: [['Pyro', ['#FB690C', '#FFB36B']], ['Aqua', ['#0B6F88', '#3FB6CF']], ['Mixed', ['#FB690C', '#0B6F88']]],
-};
+// ---------- brand / events ----------
+// Palettes and gradients come from the chosen event library (events.js)
+let currentEvent = localStorage.getItem('og-event') || 'all';
+const paletteId = () => (currentEvent !== 'all' && currentEvent !== 'general' ? currentEvent : state?.event || 'gg');
 
 // Monoline icons (Lucide shapes, 1.5px stroke, as per the G&G iconography rules)
 const ICON_PATHS = {
@@ -48,7 +44,7 @@ const setIcon = (btn, name) => { const i = btn.querySelector('i[data-icon]'); if
 const ctlTimers = {};
 const logControl = (k, v) => { clearTimeout(ctlTimers[k]); ctlTimers[k] = setTimeout(() => log('info', 'edit', { control: k, value: Array.isArray(v) ? v.join(',') : v }), 800); };
 
-const GOOGLE_FONTS = ['Bricolage Grotesque', 'Krona One', 'Figtree', 'Montserrat', 'Inter', 'Poppins', 'DM Sans', 'Archivo', 'Lexend', 'Unbounded', 'Syne', 'Space Grotesk', 'Michroma', 'Oswald', 'Bebas Neue', 'Anton'];
+const GOOGLE_FONTS = ['Bricolage Grotesque', 'Josefin Sans', 'Luckiest Guy', 'Krona One', 'Figtree', 'Montserrat', 'Inter', 'Poppins', 'DM Sans', 'Archivo', 'Lexend', 'Unbounded', 'Syne', 'Space Grotesk', 'Michroma', 'Oswald', 'Bebas Neue', 'Anton'];
 const customFonts = new Set();
 
 let state = loadCurrent() || normalize(BUILTIN_PRESETS[0]);
@@ -154,14 +150,33 @@ const setFill = (r) => r.style.setProperty('--fill', `${((r.value - r.min) / (r.
 function swatchRow(onPick) {
   const row = document.createElement('div');
   row.className = 'swatches';
-  for (const [name, hex] of BRAND_COLORS) {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'swatch'; b.style.background = hex; b.title = name; b.setAttribute('aria-label', `Use ${name}`);
-    b.onclick = () => onPick(hex);
-    row.appendChild(b);
-  }
+  row.dataset.pal = 'colors';
+  row._pick = onPick;
+  fillPalette(row);
   return row;
 }
+// Swatch and gradient rows re-fill when the event changes
+function fillPalette(row) {
+  const pal = palette(paletteId());
+  row.innerHTML = '';
+  if (row.dataset.pal === 'colors') {
+    for (const [name, hex] of pal.colors) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'swatch'; b.style.background = hex; b.title = name; b.setAttribute('aria-label', `Use ${name}`);
+      b.onclick = () => row._pick(hex);
+      row.appendChild(b);
+    }
+    return;
+  }
+  for (const [name, cols] of pal[row.dataset.pal] || []) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ghost small'; b.style.height = '28px'; b.style.padding = '0 10px';
+    b.innerHTML = `<span class="swatch" style="width:14px;height:14px;background:linear-gradient(135deg,${cols.join(',')})"></span>${name}`;
+    b.onclick = () => row._pick(cols);
+    row.appendChild(b);
+  }
+}
+const refreshPalettes = () => document.querySelectorAll('[data-pal]').forEach(fillPalette);
 
 function makeControl(it) {
   const wrap = document.createElement('div');
@@ -212,13 +227,9 @@ function makeControl(it) {
     wrap.innerHTML = `<span>${it.label}</span><div class="colors"></div><div class="swatches grads"></div>`;
     const box = wrap.querySelector('.colors');
     const grads = wrap.querySelector('.grads');
-    for (const [name, cols] of BRAND_GRADIENTS[it.gradients] || []) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'btn ghost small'; b.style.height = '28px'; b.style.padding = '0 10px';
-      b.innerHTML = `<span class="swatch" style="width:14px;height:14px;background:linear-gradient(135deg,${cols.join(',')})"></span>${name}`;
-      b.onclick = () => { setP(state, it.k, [...cols]); render(); changed(); };
-      grads.appendChild(b);
-    }
+    grads.dataset.pal = it.gradients;
+    grads._pick = (cols) => { setP(state, it.k, [...cols]); render(); changed(); };
+    fillPalette(grads);
     const render = () => {
       const arr = getP(state, it.k);
       box.innerHTML = '';
@@ -404,6 +415,7 @@ function applyState(s) {
   state = normalize(s);
   syncOutputUI();
   syncControls();
+  refreshPalettes();
   ensureFonts().then(fitViewport);
   t = 0; playing = true; syncPlay();
   changed();
@@ -778,12 +790,35 @@ function ask({ eyebrow = 'Template', title, body = '', input = null, ok = 'OK', 
 // ---------- templates ----------
 let teamLibrary = { presets: [], fonts: [] };
 const localPresets = () => JSON.parse(localStorage.getItem('og-presets') || '[]');
-function templateList() {
+const eventOf = (p) => (eventById(p.event) ? p.event : 'general');
+function allTemplates() {
   return [
-    ...BUILTIN_PRESETS.map((p, i) => ({ key: `b:${i}`, p, tag: p.name.startsWith('G&G') ? 'G&G' : '' })),
+    ...BUILTIN_PRESETS.map((p, i) => ({ key: `b:${i}`, p, tag: eventById(p.event)?.short || (p.event === 'gg' ? 'G&G' : '') })),
     ...sharedPresets.map((p, i) => ({ key: `s:${i}`, p, tag: 'Team' })),
     ...localPresets().map((p, i) => ({ key: `l:${i}`, p, tag: 'Mine' })),
   ];
+}
+// Templates for the chosen event library ("all" shows everything)
+function templateList() {
+  const all = allTemplates();
+  return currentEvent === 'all' ? all : all.filter(({ p }) => eventOf(p) === currentEvent);
+}
+function renderEventChips() {
+  const all = allTemplates();
+  const count = (id) => all.filter(({ p }) => eventOf(p) === id).length;
+  const items = [{ id: 'all', name: 'All', accent: '#ffffff', n: all.length }, ...EVENTS.map((e) => ({ ...e, n: count(e.id) })), { ...GENERAL, n: count('general') }]
+    .filter((e) => e.id === 'all' || e.n);
+  if (!items.some((e) => e.id === currentEvent)) currentEvent = 'all';
+  const box = $('eventChips');
+  box.innerHTML = items.map((e) => `<button type="button" role="tab" class="chip" data-event="${e.id}" aria-selected="${e.id === currentEvent}" title="${e.name}"><i style="background:${e.accent}"></i>${e.short || e.name}<span>${e.n}</span></button>`).join('');
+  box.querySelectorAll('.chip').forEach((b) => { b.onclick = () => setEvent(b.dataset.event); });
+}
+function setEvent(id) {
+  currentEvent = id;
+  localStorage.setItem('og-event', id);
+  log('info', 'event', { event: id });
+  renderTemplates();
+  refreshPalettes();
 }
 function templateByKey(key) {
   const [kind, i] = (key || '').split(':');
@@ -795,9 +830,10 @@ function holdTime(s) {
   return inD + Math.max(0, s.duration - inD - outD) * 0.5;
 }
 async function renderTemplates() {
+  renderEventChips();
   const box = $('templates');
   const list = templateList();
-  box.innerHTML = '';
+  box.innerHTML = list.length ? '' : '<p class="hint">No templates here yet. Design one and click <b>Save template</b>.</p>';
   for (const { key, p, tag } of list) {
     const s = normalize(p);
     const b = document.createElement('button');
@@ -808,13 +844,13 @@ async function renderTemplates() {
     c.width = 320; c.height = Math.round(320 * s.height / s.width);
     c.style.objectFit = 'contain';
     b.appendChild(c);
-    b.insertAdjacentHTML('beforeend', `${tag ? `<span class="tpl-tag">${tag}</span>` : ''}<span class="tpl-name">${p.name.replace(/^G&G · /, '').replace(/\s*\(\d+\s*[×x]\s*\d+\)\s*$/, '')}</span>`);
+    b.insertAdjacentHTML('beforeend', `${tag ? `<span class="tpl-tag">${tag}</span>` : ''}<span class="tpl-name">${p.name.replace(/^[^·]{1,30} · /, '').replace(/\s*\(\d+\s*[×x]\s*\d+\)\s*$/, '')}</span>`);
     b.onclick = () => selectTemplate(key);
     box.appendChild(b);
     document.fonts.load(fontStr(s.text.weight, 40, s.text.font), s.text.content).catch(() => {}).then(() => drawFrame(c.getContext('2d'), s, holdTime(s), s.width, s.height));
   }
   // keep the hidden select in sync (used by delete + older code paths)
-  $('presetSelect').innerHTML = list.map(({ key, p }) => `<option value="${key}">${p.name}</option>`).join('');
+  $('presetSelect').innerHTML = allTemplates().map(({ key, p }) => `<option value="${key}">${p.name}</option>`).join('');
   $('presetSelect').value = currentTemplate;
   $('deletePreset').disabled = currentTemplate.startsWith('b:');
 }
@@ -846,6 +882,7 @@ function setupTemplates() {
     const name = await ask({ title: 'Save as a template', body: server.ok ? 'Everyone using the office server will see it.' : 'It’s saved on this computer.', input: { value: suggestion, placeholder: 'e.g. Main stage schedule' }, ok: 'Save template' });
     if (!name) return;
     state.name = name.trim();
+    if (eventById(currentEvent)) state.event = currentEvent; // file it under the open event library
     if (server.ok) {
       const r = await fetch('/api/presets', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(state) });
       if (r.ok) {

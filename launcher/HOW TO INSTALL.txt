@@ -28,7 +28,9 @@ Same as installing, but drag "uninstall.sh" instead.
 
 USING THE OVERLAYS
 - Premiere / After Effects: import the .mov and place it above your footage.
-- DaVinci Resolve: import the .mov and place it on V2. It works as-is.
+- DaVinci Resolve: import the .mov and place it on V2. If the background shows
+  black: right-click the clip in the Media Pool > Clip Attributes > Video >
+  Alpha Mode: Premultiplied.
 
 TROUBLESHOOTING
 Logs are in:  ~/Library/Application Support/Overlay Generator/logs/app.log

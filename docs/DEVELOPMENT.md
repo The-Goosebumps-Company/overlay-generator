@@ -26,7 +26,8 @@ public/                 The app (everything the browser loads)
   style.css             G&G design system (tokens at the top)
   app.js                UI, templates, undo/redo, export + batch, PWA, startup recovery
   renderer.js           Draws one frame at time t — shared by preview and export
-  presets.js            Built-in templates (G&G ones first)
+  presets.js            Built-in templates (G&G, then generic, then event libraries)
+  events.js             Event libraries: per-event palettes, gradients and names
   encode-wasm.js        In-browser ProRes/QT Animation encoding via ffmpeg.wasm
   zip.js                Fast PNG encoder, gzip and a store-only ZIP writer
   log.js                Client logging (console + server log when available)
@@ -60,6 +61,8 @@ The live preview and the export call the same function, so what you see is what 
 | **.mov without a server** | Frames go to ffmpeg.wasm in the browser. About 50 s for a 5-second 1080p overlay. |
 
 **Alpha:** `.mov` frames are **premultiplied** before encoding (`premultiply()` in `app.js`), matching After Effects ProRes 4444 renders. PNG frames stay straight. Don't change this: straight alpha in a `.mov` shows as a hard-edged colour band in Resolve and in players that ignore alpha.
+
+**Resolve and FFmpeg ProRes:** Resolve doesn't always auto-detect alpha in ProRes 4444 files written by FFmpeg (it does for Apple-made files), so it may import them with *Alpha Mode: None*, which shows as a black background. The file is fine; the fix is Clip Attributes → Video → Alpha Mode: Premultiplied. Confirmed in Resolve 21.2.
 
 **Safe zones** (`safezones.js`) are an SVG layer over the preview canvas, never passed to `drawFrame`, so they can't end up in an export. Margins are on a 1080-wide reference and scale with the frame's short side. `computeLayout()` gives the overlay's box to check against the safe rectangle; *Move it inside* adjusts `layout.offsetX/Y` (and `scale` if it doesn't fit).
 

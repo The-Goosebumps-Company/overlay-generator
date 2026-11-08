@@ -18,7 +18,7 @@
 
 ---
 
-**Current version: 1.4.0.** See the [releases](https://github.com/The-Goosebumps-Company/overlay-generator/releases) and the [changelog](CHANGELOG.md).
+**Current version: 1.5.0.** See the [releases](https://github.com/The-Goosebumps-Company/overlay-generator/releases) and the [changelog](CHANGELOG.md).
 
 Pick a template, type your text and export. You get a ProRes 4444 `.mov` with alpha that animates in, holds and animates out, ready to drop on a track above your footage. The design team sets up templates once, and editors make as many overlays as they need.
 
@@ -50,7 +50,7 @@ The Mac installer needs no admin password and no Apple signing: it builds the ap
 
 ### Make an overlay
 
-1. **Pick a template.** The G&G ones come first: *Pyro title*, *Frequency lower third* and *Schedule with time*.
+1. **Pick your event, then a template.** The chips above the templates switch between event libraries: **G&G, Big Week, Rage Festival, LMC and Shimza & Friends** (or **All**). Each has a title, a lower third and a set-time or countdown card, and the colour swatches switch to that event's palette.
 2. **Type your text.** Each line in the box becomes a line on screen.
 3. **Choose the output:**
    - **Shape:** Landscape (YouTube, TV, screens), Portrait (Reels, TikTok, Stories), Square (feed posts) or Feed 4:5 (Instagram portrait posts).
@@ -82,7 +82,7 @@ In **Chrome or Edge** you pick a folder once, and numbered files (`01_…`, `02_
 
 | App | What to do |
 |---|---|
-| **DaVinci Resolve** | Put the `.mov` on a track above your footage (e.g. V2). It works as-is. |
+| **DaVinci Resolve** | Put the `.mov` on a track above your footage (e.g. V2). If the background shows **black**, right-click the clip in the Media Pool → **Clip Attributes… → Video → Alpha Mode: Premultiplied**. Select several clips to fix them all at once. |
 | **Premiere Pro** | Put it on a track above your footage. Transparency is detected automatically. |
 | **After Effects** | Import it. If asked, interpret the alpha as *Premultiplied – matted with black*. |
 | **PNG sequence** | Unzip it and import the first frame as an image sequence. Works in any app. |
@@ -102,6 +102,7 @@ In **Chrome or Edge** you pick a folder once, and numbered files (`01_…`, `02_
 | Problem | Fix |
 |---|---|
 | The app shows **Checking…** and no templates | Close it and open it again, or press ⌘⇧R. This only affects copies installed before v1.3.1; newer versions fix themselves. |
+| The overlay has a **black background** in Resolve | Resolve didn't pick up the transparency. In the Media Pool, right-click the clip → **Clip Attributes… → Video → Alpha Mode: Premultiplied**. Not "Straight", which gives the glow a hard edge. |
 | The glow has a hard edge or a solid colour band | Export again with v1.2.1 or later. Older exports used straight alpha. |
 | Exports are slow | Without a server, exports run in your browser: about 50 s for a 5-second 1080p overlay. The Mac app with Homebrew ffmpeg, or an office server, takes a few seconds. |
 | Something else | In the web app, open the browser console (⌥⌘J) and look for lines starting with `[overlay]`. In the Mac app, send `~/Library/Application Support/Overlay Generator/logs/app.log`. |
@@ -110,6 +111,7 @@ In **Chrome or Edge** you pick a folder once, and numbered files (`01_…`, `02_
 
 ## For the design team
 
+- **Event libraries:** palettes live in [`public/events.js`](public/events.js) and templates in [`public/presets.js`](public/presets.js). To add an event, add its colours to `events.js` and a few templates with `event: '<id>'`. *Save template* files new designs under whichever event is open. Brand fonts that can't be public go in through **Add** next to the font picker.
 - **Templates:** design a look in the app and click **Save template**.
   - In the **web app** it's saved in that browser.
   - To give it to **everyone**, click **Download design file** in the top bar, put the `.json` in [`presets/`](presets/) and push to `main`. It appears as a *Team* template for everyone after the next deploy, about a minute.
