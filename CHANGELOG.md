@@ -2,6 +2,9 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.5.1 · Event libraries behind a flag
+- Event libraries are hidden by default while they're being finished. Open the app with `?events=1` to turn them on (remembered on that computer) and `?events=0` to turn them off again.
+
 ## 1.5.0 · Event libraries
 - **Event libraries:** pick an event above the templates (G&G, Big Week, Rage Festival, Luxurious Marble Circus, Shimza & Friends) to see its templates. The colour swatches and gradients switch to that event's palette.
 - Three templates per event (title, lower third and a set-time or countdown card), styled from each event's artwork and style guide. LMC uses its official colours and Josefin Sans.

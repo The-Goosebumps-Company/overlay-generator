@@ -66,6 +66,8 @@ The live preview and the export call the same function, so what you see is what 
 
 **Safe zones** (`safezones.js`) are an SVG layer over the preview canvas, never passed to `drawFrame`, so they can't end up in an export. Margins are on a 1080-wide reference and scale with the frame's short side. `computeLayout()` gives the overlay's box to check against the safe rectangle; *Move it inside* adjusts `layout.offsetX/Y` (and `scale` if it doesn't fit).
 
+**Feature flags:** event libraries are off by default. `?events=1` / `?events=0` in the URL turns them on or off and saves the choice in `localStorage` (`og-flag-events`). When off, event templates and the event chips are hidden and the swatches use the G&G palette (`EVENTS_ON` in `app.js`).
+
 **Batch export** runs `renderToFile()` once per row. In Chrome and Edge it writes files through the File System Access API (`showDirectoryPicker`); elsewhere it downloads them one by one.
 
 ## Three ways to run it

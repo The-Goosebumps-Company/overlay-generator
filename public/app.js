@@ -11,8 +11,14 @@ const $ = (id) => document.getElementById(id);
 
 // ---------- brand / events ----------
 // Palettes and gradients come from the chosen event library (events.js)
-let currentEvent = localStorage.getItem('og-event') || 'all';
-const paletteId = () => (currentEvent !== 'all' && currentEvent !== 'general' ? currentEvent : state?.event || 'gg');
+// Feature flag: event libraries are hidden unless turned on with ?events=1
+// (remembered on this computer; ?events=0 turns them off again).
+const EVENTS_ON = (() => {
+  const q = new URLSearchParams(location.search).get('events');
+  try { if (q === '1' || q === '0') localStorage.setItem('og-flag-events', q); return localStorage.getItem('og-flag-events') === '1'; } catch { return q === '1'; }
+})();
+let currentEvent = EVENTS_ON ? localStorage.getItem('og-event') || 'all' : 'all';
+const paletteId = () => (!EVENTS_ON ? 'gg' : currentEvent !== 'all' && currentEvent !== 'general' ? currentEvent : state?.event || 'gg');
 
 // Monoline icons (Lucide shapes, 1.5px stroke, as per the G&G iconography rules)
 const ICON_PATHS = {
@@ -791,9 +797,11 @@ function ask({ eyebrow = 'Template', title, body = '', input = null, ok = 'OK', 
 let teamLibrary = { presets: [], fonts: [] };
 const localPresets = () => JSON.parse(localStorage.getItem('og-presets') || '[]');
 const eventOf = (p) => (eventById(p.event) ? p.event : 'general');
+const isEventTemplate = (p) => eventById(p.event) && p.event !== 'gg';
 function allTemplates() {
   return [
-    ...BUILTIN_PRESETS.map((p, i) => ({ key: `b:${i}`, p, tag: eventById(p.event)?.short || (p.event === 'gg' ? 'G&G' : '') })),
+    ...BUILTIN_PRESETS.map((p, i) => ({ key: `b:${i}`, p, tag: eventById(p.event)?.short || (p.event === 'gg' ? 'G&G' : '') }))
+      .filter(({ p }) => EVENTS_ON || !isEventTemplate(p)),
     ...sharedPresets.map((p, i) => ({ key: `s:${i}`, p, tag: 'Team' })),
     ...localPresets().map((p, i) => ({ key: `l:${i}`, p, tag: 'Mine' })),
   ];
@@ -804,6 +812,8 @@ function templateList() {
   return currentEvent === 'all' ? all : all.filter(({ p }) => eventOf(p) === currentEvent);
 }
 function renderEventChips() {
+  $('eventChips').hidden = !EVENTS_ON;
+  if (!EVENTS_ON) return;
   const all = allTemplates();
   const count = (id) => all.filter(({ p }) => eventOf(p) === id).length;
   const items = [{ id: 'all', name: 'All', accent: '#ffffff', n: all.length }, ...EVENTS.map((e) => ({ ...e, n: count(e.id) })), { ...GENERAL, n: count('general') }]
@@ -882,7 +892,7 @@ function setupTemplates() {
     const name = await ask({ title: 'Save as a template', body: server.ok ? 'Everyone using the office server will see it.' : 'It’s saved on this computer.', input: { value: suggestion, placeholder: 'e.g. Main stage schedule' }, ok: 'Save template' });
     if (!name) return;
     state.name = name.trim();
-    if (eventById(currentEvent)) state.event = currentEvent; // file it under the open event library
+    if (EVENTS_ON && eventById(currentEvent)) state.event = currentEvent; // file it under the open event library
     if (server.ok) {
       const r = await fetch('/api/presets', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(state) });
       if (r.ok) {
