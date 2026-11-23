@@ -117,9 +117,6 @@ function eventTemplates() {
   // Rage: loud, bubbly, pink and purple
   const rg = { font: 'Luckiest Guy', weight: 400, uppercase: true, color: '#ffffff', revealTint: '#FF2E88', tracking: 0.03 };
   const rgCard = { colors: ['#FF2E88', '#C2187A', '#6A3CB5'], fill: '#2A0E3A', fillOpacity: 0.35 };
-  // LMC: Josefin capitals, big-top gold, orange and red
-  const lmc = { font: 'Josefin Sans', weight: 700, uppercase: true, color: '#F1EAB5', revealTint: '#EB7602', tracking: 0.06 };
-  const lmcCard = { colors: ['#EBCC2A', '#EB7602', '#E00700'], fill: '#2A0605', fillOpacity: 0.35 };
   // Shimza & Friends: heavy geometric capitals, navy with amber and flame
   const sf = { font: 'Montserrat', weight: 800, uppercase: true, color: '#ffffff', revealTint: '#FDB75B', tracking: 0.02 };
   const sfCard = { colors: ['#FDB75B', '#F07C2F', '#D9432B'], fill: '#071C2C', fillOpacity: 0.5 };
@@ -161,24 +158,6 @@ function eventTemplates() {
       text: { ...rg, content: 'Artist name\nMain stage', size: 64, lineHeight: 1.05, align: 'left' },
       card: { ...rgCard, colors: ['#9B6BE0', '#6A3CB5'], padX: 54, padY: 38, radius: 30, glow: 56 },
       blobs: { colors: ['#7ED957', '#FFD60A'], count: 1, size: 0.5 },
-    }),
-
-    ev('lmc', 'LMC · Countdown', {
-      text: { ...lmc, content: '3 months\nto go', size: 132, lineHeight: 1 },
-      card: { ...lmcCard, padX: 130, padY: 92, radius: 26, glow: 100 },
-      blobs: { colors: ['#EBCC2A', '#EB7602'] },
-    }),
-    ev('lmc', 'LMC · Act lower third', {
-      ...lowerThird,
-      text: { ...lmc, content: 'Act name\nThe Big Top · 20:00', size: 58, lineHeight: 1.12, align: 'left' },
-      card: { colors: ['#204CA5', '#970201'], fill: '#0B1530', fillOpacity: 0.5, padX: 56, padY: 38, radius: 20, glow: 54 },
-      blobs: { colors: ['#FF7ABC'], count: 1, size: 0.5 },
-    }),
-    ev('lmc', 'LMC · Show time', {
-      text: { ...lmc, content: 'Main show\nThe Big Top', size: 104, lineHeight: 1.02 },
-      card: { ...lmcCard, colors: ['#204CA5', '#970201'], fill: '#0B1530', padX: 140, padY: 96, radius: 26, glow: 96 },
-      blobs: { colors: ['#EBCC2A', '#FF7ABC'] },
-      badge: { enabled: true, text: '20:00', colors: ['#EBCC2A', '#EB7602', '#E00700'], weight: 700 },
     }),
 
     // LMC → Evophoria 2026: static glitter-gold lettering from "Evophoria 06.psd"

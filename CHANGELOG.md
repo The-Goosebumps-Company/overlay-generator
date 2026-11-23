@@ -2,6 +2,9 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.8.3 · LMC clean-up
+- Removed the LMC *Countdown*, *Act lower third* and *Show time* box templates. LMC now holds just the Evophoria 2026 gold text.
+
 ## 1.8.2 · Beaufort Pro Heavy
 - MMFF crest capitals use **Beaufort Pro Heavy**, as in the artwork. Light, Medium, Bold and Heavy come with the office server and the Mac app.
 - The public website doesn't include them; there, add `BeaufortPro-Heavy.otf` with **Add** once (Fraunces stands in until then).
