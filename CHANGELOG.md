@@ -2,6 +2,14 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.6.0 · Library folders and gold text
+- **Library folders** (with `?events=1`): templates are now browsed like a gallery. Each event is a folder with a cover preview. Open it to see its templates and any folders inside (for example LMC → Evophoria 2026). Breadcrumbs and the back button take you up a level, and the app remembers where you were.
+- **Gold glitter text:** a new *Look* next to the glow box. It recreates the LMC "Evophoria" Photoshop lettering in the app: a glitter-gold fill, rough Dissolve-style edges, a soft bevel and a plum drop shadow, set on a tilt with an italic slant. Type anything you like.
+- Lowercase words can be set in a script font ("step OUT of the ORDINARIOUS"). Snell Roundhand is used on Macs, with Great Vibes as the fallback elsewhere.
+- Finishes: Pale gold, Evophoria (orange gold), Rose gold and Silver. Tilt, slant, extra weight, glitter size, sparkle, rough edges, bevel and shadow can all be adjusted.
+- Three LMC → Evophoria 2026 templates: *Title*, *Step out* and *Tickets on sale*. They're static by default; switch on *Animate in/out* for a fade.
+- *Save template* files new designs in whichever folder is open.
+
 ## 1.5.1 · Event libraries behind a flag
 - Event libraries are hidden by default while they're being finished. Open the app with `?events=1` to turn them on (remembered on that computer) and `?events=0` to turn them off again.
 

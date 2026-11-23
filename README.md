@@ -51,7 +51,8 @@ The Mac installer needs no admin password and no Apple signing: it builds the ap
 ### Make an overlay
 
 1. **Pick a template.** The G&G ones come first: *Pyro title*, *Frequency lower third* and *Schedule with time*.
-   - *Preview:* event libraries (Big Week, Rage Festival, LMC, Shimza & Friends) are hidden behind a flag for now. Open the app with `?events=1` at the end of the address to try them; `?events=0` hides them again.
+   - *Preview:* event libraries (Big Week, Rage Festival, LMC, Shimza & Friends) are hidden behind a flag for now. Open the app with `?events=1` at the end of the address to try them; `?events=0` hides them again. Each event is a folder: click it to open it, and use the breadcrumbs to go back. LMC → Evophoria 2026 has the gold glitter titles.
+   - *Gold glitter text:* set **Look** to *Gold glitter text* (under Text). Lowercase words are set in script, and capitals in your chosen font.
 2. **Type your text.** Each line in the box becomes a line on screen.
 3. **Choose the output:**
    - **Shape:** Landscape (YouTube, TV, screens), Portrait (Reels, TikTok, Stories), Square (feed posts) or Feed 4:5 (Instagram portrait posts).
@@ -112,7 +113,7 @@ In **Chrome or Edge** you pick a folder once, and numbered files (`01_…`, `02_
 
 ## For the design team
 
-- **Event libraries** (behind the `?events=1` flag for now): palettes live in [`public/events.js`](public/events.js) and templates in [`public/presets.js`](public/presets.js). To add an event, add its colours to `events.js` and a few templates with `event: '<id>'`. *Save template* files new designs under whichever event is open. Brand fonts that can't be public go in through **Add** next to the font picker.
+- **Event libraries** (behind the `?events=1` flag for now): palettes live in [`public/events.js`](public/events.js) and templates in [`public/presets.js`](public/presets.js). To add an event, add its colours to `events.js` and a few templates with `event: '<id>'`. Add `folder: 'Evophoria 2026'` (or `'Evophoria 2026/Socials'`) to put a template in a folder inside the event. *Save template* files new designs in whichever folder is open. Brand fonts that can't be public go in through **Add** next to the font picker.
 - **Templates:** design a look in the app and click **Save template**.
   - In the **web app** it's saved in that browser.
   - To give it to **everyone**, click **Download design file** in the top bar, put the `.json` in [`presets/`](presets/) and push to `main`. It appears as a *Team* template for everyone after the next deploy, about a minute.

@@ -42,8 +42,18 @@ export const eventById = (id) => EVENTS.find((e) => e.id === id) || null;
 export const eventLabel = (e) => (e ? e.short || e.name : '');
 const NEUTRALS = [['White', '#FFFFFF'], ['Black', '#000000']];
 
+// Glitter-gold finishes for gold text, darkest grain → brightest.
+// Sampled from the LMC 2026 renders: "Evophoria 06.psd" (orange gold) and
+// the pale-gold typography overlays (GOLDTEXT_1–4).
+export const GOLD_FINISHES = [
+  ['Pale gold', ['#905921', '#B98434', '#D0A746', '#E2B94F', '#E7CB64', '#F4E287', '#F7EFCA']],
+  ['Evophoria', ['#7D220B', '#BF340E', '#D5540F', '#C96F26', '#E78420', '#F6B633', '#F5DDAC']],
+  ['Rose gold', ['#4A1E1A', '#7E3B31', '#B0624F', '#CF8A72', '#E3A98E', '#F0C6AE', '#F8E1D2']],
+  ['Silver', ['#2E3033', '#55595E', '#7F848A', '#A7ACB2', '#C9CDD2', '#E4E7EA', '#F7F8F9']],
+];
+
 // Swatches/gradients to offer: the chosen event's, or G&G's when none is chosen
 export function palette(id) {
   const e = eventById(id) || EVENTS[0];
-  return { colors: [...e.colors, ...NEUTRALS], card: e.card, blobs: e.blobs, badge: e.card };
+  return { colors: [...e.colors, ...NEUTRALS], card: e.card, blobs: e.blobs, badge: e.card, gold: GOLD_FINISHES };
 }

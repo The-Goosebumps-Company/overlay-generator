@@ -17,8 +17,14 @@ const EVENTS_ON = (() => {
   const q = new URLSearchParams(location.search).get('events');
   try { if (q === '1' || q === '0') localStorage.setItem('og-flag-events', q); return localStorage.getItem('og-flag-events') === '1'; } catch { return q === '1'; }
 })();
-let currentEvent = EVENTS_ON ? localStorage.getItem('og-event') || 'all' : 'all';
-const paletteId = () => (!EVENTS_ON ? 'gg' : currentEvent !== 'all' && currentEvent !== 'general' ? currentEvent : state?.event || 'gg');
+// Where the library browser is: [] = all events, ['lmc'] = an event, ['lmc', 'Evophoria 2026'] = a folder in it
+let libPath = EVENTS_ON ? loadLibPath() : [];
+function loadLibPath() {
+  try { const p = JSON.parse(localStorage.getItem('og-lib-path')); if (Array.isArray(p)) return p.map(String); } catch {}
+  const old = localStorage.getItem('og-event'); // before folders: the chosen event chip
+  return old && old !== 'all' ? [old] : [];
+}
+const paletteId = () => (!EVENTS_ON ? 'gg' : eventById(libPath[0]) ? libPath[0] : state?.event || 'gg');
 
 // Monoline icons (Lucide shapes, 1.5px stroke, as per the G&G iconography rules)
 const ICON_PATHS = {
@@ -31,6 +37,7 @@ const ICON_PATHS = {
   trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
   upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
   folder: '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
   install: '<path d="M12 13V7"/><path d="m15 10-3 3-3-3"/><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M12 17v4"/><path d="M8 21h8"/>',
   image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
@@ -50,7 +57,7 @@ const setIcon = (btn, name) => { const i = btn.querySelector('i[data-icon]'); if
 const ctlTimers = {};
 const logControl = (k, v) => { clearTimeout(ctlTimers[k]); ctlTimers[k] = setTimeout(() => log('info', 'edit', { control: k, value: Array.isArray(v) ? v.join(',') : v }), 800); };
 
-const GOOGLE_FONTS = ['Bricolage Grotesque', 'Josefin Sans', 'Luckiest Guy', 'Krona One', 'Figtree', 'Montserrat', 'Inter', 'Poppins', 'DM Sans', 'Archivo', 'Lexend', 'Unbounded', 'Syne', 'Space Grotesk', 'Michroma', 'Oswald', 'Bebas Neue', 'Anton'];
+const GOOGLE_FONTS = ['Bricolage Grotesque', 'Josefin Sans', 'Snell Roundhand', 'Great Vibes', 'Luckiest Guy', 'Krona One', 'Figtree', 'Montserrat', 'Inter', 'Poppins', 'DM Sans', 'Archivo', 'Lexend', 'Unbounded', 'Syne', 'Space Grotesk', 'Michroma', 'Oswald', 'Bebas Neue', 'Anton'];
 const customFonts = new Set();
 
 let state = loadCurrent() || normalize(BUILTIN_PRESETS[0]);
@@ -61,8 +68,12 @@ let currentTemplate = localStorage.getItem('og-template') || 'b:0';
 
 // ---------- controls schema ----------
 const WEIGHTS = [200, 300, 400, 500, 600, 700, 800, 900];
+// `show` hides a section or control that doesn't apply to the current look
+const isGold = (s) => s.style === 'gold';
+const notGold = (s) => !isGold(s);
 const SECTIONS = [
   { title: 'Text', open: true, items: [
+    { k: 'style', type: 'select', label: 'Look', options: [['glow', 'Glow box'], ['gold', 'Gold glitter text']] },
     { k: 'text.content', type: 'textarea', label: 'Your text', help: 'Each line in the box becomes a line on screen.' },
     { k: 'text.font', type: 'font', label: 'Font' },
     { k: 'text.weight', type: 'select', label: 'Weight', options: WEIGHTS },
@@ -71,9 +82,29 @@ const SECTIONS = [
     { k: 'text.tracking', type: 'range', label: 'Letter spacing', min: -0.1, max: 0.5, step: 0.005 },
     { k: 'text.align', type: 'select', label: 'Align', options: [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']] },
     { k: 'text.uppercase', type: 'check', label: 'All caps' },
-    { k: 'text.color', type: 'color', label: 'Colour' },
-    { k: 'text.revealTint', type: 'color', label: 'Reveal tint' },
-    { k: 'text.shadow', type: 'range', label: 'Shadow', min: 0, max: 40, step: 1 },
+    { k: 'text.color', type: 'color', label: 'Colour', show: notGold },
+    { k: 'text.revealTint', type: 'color', label: 'Reveal tint', show: notGold },
+    { k: 'text.shadow', type: 'range', label: 'Shadow', min: 0, max: 40, step: 1, show: notGold },
+  ] },
+  { title: 'Gold text', open: true, show: isGold, items: [
+    { k: 'gold.colors', type: 'colors', label: 'Glitter (dark → bright)', max: 8, gradients: 'gold' },
+    { k: 'gold.script', type: 'check', label: 'Set lowercase words in script (“step OUT of the”)' },
+    { k: 'gold.scriptFont', type: 'font', label: 'Script font' },
+    { k: 'gold.scriptScale', type: 'range', label: 'Script size', min: 0.5, max: 1.8, step: 0.01 },
+    { k: 'gold.tilt', type: 'range', label: 'Tilt°', min: -45, max: 45, step: 0.5 },
+    { k: 'gold.slant', type: 'range', label: 'Slant°', min: -30, max: 30, step: 0.5 },
+    { k: 'gold.boost', type: 'range', label: 'Extra weight', min: 0, max: 12, step: 0.1 },
+    { k: 'gold.grain', type: 'range', label: 'Glitter size', min: 0.5, max: 8, step: 0.1 },
+    { k: 'gold.sparkle', type: 'range', label: 'Sparkle', min: 0, max: 1, step: 0.01 },
+    { k: 'gold.grit', type: 'range', label: 'Rough edges', min: 0, max: 10, step: 0.1 },
+    { k: 'gold.bevel', type: 'range', label: 'Bevel', min: 0, max: 1, step: 0.01 },
+    { k: 'gold.bevelSize', type: 'range', label: 'Bevel size', min: 1, max: 30, step: 0.5 },
+    { k: 'gold.lightAngle', type: 'range', label: 'Light angle°', min: 0, max: 360, step: 1 },
+    { k: 'gold.shadowColor', type: 'color', label: 'Shadow colour' },
+    { k: 'gold.shadowOpacity', type: 'range', label: 'Shadow opacity', min: 0, max: 1, step: 0.01 },
+    { k: 'gold.shadowDistance', type: 'range', label: 'Shadow distance', min: 0, max: 80, step: 0.5 },
+    { k: 'gold.shadowBlur', type: 'range', label: 'Shadow softness', min: 0, max: 80, step: 0.5 },
+    { k: 'gold.shadowAngle', type: 'range', label: 'Shadow angle°', min: 0, max: 360, step: 1 },
   ] },
   { title: 'Animation', open: true, items: [
     { k: 'anim.in', type: 'check', label: 'Animate in' },
@@ -82,9 +113,9 @@ const SECTIONS = [
     { k: 'anim.out', type: 'check', label: 'Animate out' },
     { k: 'anim.outStyle', type: 'select', label: 'Out style', options: [['line', 'Box → line'], ['fade', 'Fade'], ['pop', 'Shrink'], ['slide', 'Slide up']] },
     { k: 'anim.outDur', type: 'range', label: 'Out length (s)', min: 0.2, max: 5, step: 0.05 },
-    { k: 'anim.textStyle', type: 'select', label: 'Text reveal', options: [['cascade', 'Letter cascade'], ['words', 'Word by word'], ['lines', 'Line by line'], ['typewriter', 'Typewriter'], ['fade', 'Fade']] },
+    { k: 'anim.textStyle', type: 'select', show: notGold, label: 'Text reveal', options: [['cascade', 'Letter cascade'], ['words', 'Word by word'], ['lines', 'Line by line'], ['typewriter', 'Typewriter'], ['fade', 'Fade']] },
   ] },
-  { title: 'Box & glow', items: [
+  { title: 'Box & glow', show: notGold, items: [
     { k: 'card.colors', type: 'colors', label: 'Glow', max: 5, gradients: 'card' },
     { k: 'card.angle', type: 'range', label: 'Angle', min: 0, max: 360, step: 1 },
     { k: 'card.glow', type: 'range', label: 'Glow depth', min: 4, max: 400, step: 1 },
@@ -98,7 +129,7 @@ const SECTIONS = [
     { k: 'card.fill', type: 'color', label: 'Backing' },
     { k: 'card.fillOpacity', type: 'range', label: 'Backing opacity', min: 0, max: 1, step: 0.01 },
   ] },
-  { title: 'Moving light', items: [
+  { title: 'Moving light', show: notGold, items: [
     { k: 'blobs.enabled', type: 'check', label: 'Light drifting along the edge' },
     { k: 'blobs.colors', type: 'colors', label: 'Colours', max: 4, gradients: 'blobs' },
     { k: 'blobs.count', type: 'range', label: 'Count', min: 0, max: 8, step: 1 },
@@ -106,7 +137,7 @@ const SECTIONS = [
     { k: 'blobs.speed', type: 'range', label: 'Speed', min: 0, max: 5, step: 0.05 },
     { k: 'blobs.intensity', type: 'range', label: 'Intensity', min: 0, max: 1, step: 0.01 },
   ] },
-  { title: 'Badge', items: [
+  { title: 'Badge', show: notGold, items: [
     { k: 'badge.enabled', type: 'check', label: 'Show a badge above the text (time, tag…)' },
     { k: 'badge.text', type: 'text', label: 'Badge text' },
     { k: 'badge.scramble', type: 'check', label: 'Scramble digits as it appears' },
@@ -146,7 +177,11 @@ function buildControls() {
     d.addEventListener('toggle', () => { openState[sec.title] = d.open; localStorage.setItem('og-open-v2', JSON.stringify(openState)); });
     d.innerHTML = `<summary><span class="eyebrow">${sec.title}</span></summary><div class="body"></div>`;
     const body = d.querySelector('.body');
-    for (const it of sec.items) body.appendChild(makeControl(it));
+    for (const it of sec.items) {
+      const el = body.appendChild(makeControl(it));
+      if (it.show) binders.push(() => { el.hidden = !it.show(state); });
+    }
+    if (sec.show) binders.push(() => { d.hidden = !sec.show(state); });
     root.appendChild(d);
   }
 }
@@ -189,7 +224,7 @@ function makeControl(it) {
   wrap.className = 'ctl';
   const id = `c${++uid}`;
   const label = `<label for="${id}">${it.label}</label>`;
-  const commit = (v) => { setP(state, it.k, v); logControl(it.k, v); changed(); };
+  const commit = (v) => { setP(state, it.k, v); logControl(it.k, v); changed(); if (it.k === 'style') syncControls(); };
   if (it.type === 'range') {
     wrap.innerHTML = `${label}<input id="${id}" type="range" min="${it.min}" max="${it.max}" step="${it.step}"><span class="val"><input type="number" step="${it.step}" aria-label="${it.label} value"></span>`;
     const [r, n] = wrap.querySelectorAll('input');
@@ -321,6 +356,7 @@ async function loadFonts() {
 async function ensureFonts(s = state) {
   const loads = [document.fonts.load(fontStr(s.text.weight, 40, s.text.font), s.text.content || 'A')];
   if (s.badge.enabled) loads.push(document.fonts.load(fontStr(s.badge.weight, 40, s.text.font), s.badge.text || '0'));
+  if (s.style === 'gold' && s.gold.script) loads.push(document.fonts.load(fontStr(700, 40, s.gold.scriptFont), s.text.content || 'a'), document.fonts.load(fontStr(400, 40, 'Great Vibes'), 'a'));
   try { await Promise.all(loads); } catch {}
 }
 
@@ -806,29 +842,60 @@ function allTemplates() {
     ...localPresets().map((p, i) => ({ key: `l:${i}`, p, tag: 'Mine' })),
   ];
 }
-// Templates for the chosen event library ("all" shows everything)
-function templateList() {
+// Library browser: events are top-level folders; a template's `folder`
+// ("Evophoria 2026" or "Evophoria 2026/Socials") nests it further inside.
+const folderOf = (p) => [eventOf(p), ...String(p.folder || '').split('/').map((x) => x.trim()).filter(Boolean)];
+const within = (path, f) => path.every((seg, i) => f[i] === seg);
+function libraryView() {
   const all = allTemplates();
-  return currentEvent === 'all' ? all : all.filter(({ p }) => eventOf(p) === currentEvent);
+  if (!EVENTS_ON) return { folders: [], items: all };
+  const inside = all.filter(({ p }) => within(libPath, folderOf(p)));
+  const items = inside.filter(({ p }) => folderOf(p).length === libPath.length);
+  const sub = new Map();
+  for (const it of inside) {
+    const f = folderOf(it.p);
+    if (f.length <= libPath.length) continue;
+    const id = f[libPath.length];
+    if (!sub.has(id)) sub.set(id, { id, n: 0, cover: it });
+    sub.get(id).n++;
+  }
+  let folders = [...sub.values()];
+  if (!libPath.length) { // events in their set order, General last
+    const order = [...EVENTS.map((e) => e.id), GENERAL.id];
+    folders.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  }
+  return { folders, items };
 }
-function renderEventChips() {
-  $('eventChips').hidden = !EVENTS_ON;
+const folderName = (depth, id) => (depth === 0 ? (eventById(id) || GENERAL).name : id);
+const folderAccent = (path) => (eventById(path[0]) || GENERAL).accent;
+function renderCrumbs() {
+  const nav = $('libCrumbs');
+  nav.hidden = !EVENTS_ON;
   if (!EVENTS_ON) return;
-  const all = allTemplates();
-  const count = (id) => all.filter(({ p }) => eventOf(p) === id).length;
-  const items = [{ id: 'all', name: 'All', accent: '#ffffff', n: all.length }, ...EVENTS.map((e) => ({ ...e, n: count(e.id) })), { ...GENERAL, n: count('general') }]
-    .filter((e) => e.id === 'all' || e.n);
-  if (!items.some((e) => e.id === currentEvent)) currentEvent = 'all';
-  const box = $('eventChips');
-  box.innerHTML = items.map((e) => `<button type="button" role="tab" class="chip" data-event="${e.id}" aria-selected="${e.id === currentEvent}" title="${e.name}"><i style="background:${e.accent}"></i>${e.short || e.name}<span>${e.n}</span></button>`).join('');
-  box.querySelectorAll('.chip').forEach((b) => { b.onclick = () => setEvent(b.dataset.event); });
+  const parts = [{ label: 'All events', depth: 0 }, ...libPath.map((id, i) => ({ label: i === 0 ? eventLabel(eventById(id)) || GENERAL.name : id, depth: i + 1 }))];
+  nav.innerHTML = (libPath.length ? `<button type="button" class="btn ghost icon-only crumb-back" aria-label="Back"><i data-icon="back"></i></button>` : '')
+    + parts.map((c, i) => (i === parts.length - 1
+      ? `<span class="crumb" aria-current="location">${c.label}</span>`
+      : `<button type="button" class="crumb" data-depth="${c.depth}">${c.label}</button><span class="crumb-sep" aria-hidden="true">/</span>`)).join('');
+  hydrateIcons(nav);
+  nav.querySelectorAll('button.crumb').forEach((b) => { b.onclick = () => openFolder(libPath.slice(0, +b.dataset.depth)); });
+  const back = nav.querySelector('.crumb-back');
+  if (back) back.onclick = () => openFolder(libPath.slice(0, -1));
 }
-function setEvent(id) {
-  currentEvent = id;
-  localStorage.setItem('og-event', id);
-  log('info', 'event', { event: id });
+function openFolder(path) {
+  libPath = path;
+  try { localStorage.setItem('og-lib-path', JSON.stringify(path)); } catch {}
+  log('info', 'library.open', { path: path.join('/') || '/' });
   renderTemplates();
   refreshPalettes();
+}
+function thumbCanvas(p) {
+  const s = normalize(p);
+  const c = document.createElement('canvas');
+  c.width = 320; c.height = Math.round(320 * s.height / s.width);
+  c.style.objectFit = 'contain';
+  ensureFonts(s).then(() => drawFrame(c.getContext('2d'), s, holdTime(s), s.width, s.height));
+  return c;
 }
 function templateByKey(key) {
   const [kind, i] = (key || '').split(':');
@@ -840,10 +907,22 @@ function holdTime(s) {
   return inD + Math.max(0, s.duration - inD - outD) * 0.5;
 }
 async function renderTemplates() {
-  renderEventChips();
+  renderCrumbs();
   const box = $('templates');
-  const list = templateList();
-  box.innerHTML = list.length ? '' : '<p class="hint">No templates here yet. Design one and click <b>Save template</b>.</p>';
+  const { folders, items: list } = libraryView();
+  box.innerHTML = list.length || folders.length ? '' : '<p class="hint">No templates here yet. Design one and click <b>Save template</b>.</p>';
+  for (const f of folders) {
+    const path = [...libPath, f.id];
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tpl folder';
+    b.style.setProperty('--accent', folderAccent(path));
+    b.setAttribute('aria-label', `Open ${folderName(libPath.length, f.id)}, ${f.n} template${f.n === 1 ? '' : 's'}`);
+    b.appendChild(thumbCanvas(f.cover.p));
+    b.insertAdjacentHTML('beforeend', `<span class="folder-ico"><i data-icon="folder"></i>${f.n}</span><span class="tpl-name">${folderName(libPath.length, f.id)}</span>`);
+    hydrateIcons(b);
+    b.onclick = () => openFolder(path);
+    box.appendChild(b);
+  }
   for (const { key, p, tag } of list) {
     const s = normalize(p);
     const b = document.createElement('button');
@@ -854,10 +933,10 @@ async function renderTemplates() {
     c.width = 320; c.height = Math.round(320 * s.height / s.width);
     c.style.objectFit = 'contain';
     b.appendChild(c);
-    b.insertAdjacentHTML('beforeend', `${tag ? `<span class="tpl-tag">${tag}</span>` : ''}<span class="tpl-name">${p.name.replace(/^[^·]{1,30} · /, '').replace(/\s*\(\d+\s*[×x]\s*\d+\)\s*$/, '')}</span>`);
+    b.insertAdjacentHTML('beforeend', `${tag && (!EVENTS_ON || tag === 'Team' || tag === 'Mine') ? `<span class="tpl-tag">${tag}</span>` : ''}<span class="tpl-name">${p.name.replace(/^[^·]{1,30} · /, '').replace(/\s*\(\d+\s*[×x]\s*\d+\)\s*$/, '')}</span>`);
     b.onclick = () => selectTemplate(key);
     box.appendChild(b);
-    document.fonts.load(fontStr(s.text.weight, 40, s.text.font), s.text.content).catch(() => {}).then(() => drawFrame(c.getContext('2d'), s, holdTime(s), s.width, s.height));
+    ensureFonts(s).then(() => drawFrame(c.getContext('2d'), s, holdTime(s), s.width, s.height));
   }
   // keep the hidden select in sync (used by delete + older code paths)
   $('presetSelect').innerHTML = allTemplates().map(({ key, p }) => `<option value="${key}">${p.name}</option>`).join('');
@@ -892,7 +971,10 @@ function setupTemplates() {
     const name = await ask({ title: 'Save as a template', body: server.ok ? 'Everyone using the office server will see it.' : 'It’s saved on this computer.', input: { value: suggestion, placeholder: 'e.g. Main stage schedule' }, ok: 'Save template' });
     if (!name) return;
     state.name = name.trim();
-    if (EVENTS_ON && eventById(currentEvent)) state.event = currentEvent; // file it under the open event library
+    if (EVENTS_ON && libPath.length) { // file it in the open library folder
+      state.event = eventById(libPath[0]) ? libPath[0] : undefined;
+      state.folder = libPath.slice(1).join('/') || undefined;
+    }
     if (server.ok) {
       const r = await fetch('/api/presets', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(state) });
       if (r.ok) {

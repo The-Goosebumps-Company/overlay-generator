@@ -33,6 +33,16 @@ export const BASE = {
     enabled: false, text: '14:10', size: 60, weight: 700, padX: 36, padY: 14, radius: 12, gap: 28,
     colors: ['#5b45e6', '#c63fb6'], angle: 0, glow: 30, opacity: 1, scramble: true,
   },
+  // 'glow' = text in a glowing box; 'gold' = glitter-gold lettering (LMC Evophoria look)
+  style: 'glow',
+  gold: {
+    colors: ['#905921', '#B98434', '#D0A746', '#E2B94F', '#E7CB64', '#F4E287', '#F7EFCA'],
+    script: true, scriptFont: 'Snell Roundhand', scriptScale: 1.05,
+    tilt: -9, slant: 14, boost: 7,
+    grain: 0.9, sparkle: 0.3, grit: 1.2,
+    bevel: 0.35, bevelSize: 8, lightAngle: 42,
+    shadowColor: '#49121F', shadowOpacity: 0.55, shadowAngle: 40, shadowDistance: 14, shadowBlur: 16,
+  },
 };
 
 export function defaults() { return structuredClone(BASE); }
@@ -173,6 +183,7 @@ function drawGlowBox(ctx, k, box, opt, t, key, blobs, blobAlpha) {
 
 // Measure text + badge and work out where the card sits in the frame.
 export function computeLayout(ctx, s, W, H) {
+  if (s.style === 'gold') return goldLayout(ctx, s, W, H);
   const T = s.text, C = s.card, B = s.badge;
   const raw = T.uppercase ? T.content.toUpperCase() : T.content;
   const lines = raw.split('\n');
@@ -209,7 +220,12 @@ export function computeLayout(ctx, s, W, H) {
   const contentH = textH + (badge ? badge.h + B.gap : 0);
   const cw = Math.max(C.minWidth, contentW + C.padX * 2);
   const ch = Math.max(C.minHeight, contentH + C.padY * 2);
+  const { u, x, y } = place(s, W, H, cw, ch);
+  return { u, lines: lineData, lh, capH, track, textW, textH, contentH, badge, card: { x, y, w: cw, h: ch } };
+}
 
+// Scale and position a cw × ch block (design units) in the frame.
+function place(s, W, H, cw, ch) {
   const base = Math.min(W, H) / 1080;
   let u = base * s.layout.scale;
   const safePx = (s.layout.safe / 100) * Math.min(W, H);
@@ -223,8 +239,7 @@ export function computeLayout(ctx, s, W, H) {
   let y = vy === 'top' ? m : vy === 'bottom' ? fh - m - ch : (fh - ch) / 2;
   x += (s.layout.offsetX / 100) * fw;
   y += (s.layout.offsetY / 100) * fh;
-
-  return { u, lines: lineData, lh, capH, track, textW, textH, contentH, badge, card: { x, y, w: cw, h: ch } };
+  return { u, x, y };
 }
 
 function timeline(s, t) {
@@ -289,6 +304,7 @@ export function drawFrame(ctx, s, t, W, H) {
   ctx.globalAlpha = 1;
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+  if (s.style === 'gold') return drawGold(ctx, s, t, W, H, ds);
   const Lay = computeLayout(ctx, s, W, H);
   const tl = timeline(s, t);
   if (tl.alpha <= 0.001 || tl.gw <= 0.001) return Lay;
@@ -400,5 +416,227 @@ export function drawFrame(ctx, s, t, W, H) {
     });
     ctx.restore();
   }
+  return Lay;
+}
+
+// ---------- gold glitter text ----------
+// Recreates the LMC "Evophoria" Photoshop look in code: a glitter fill
+// (random grains from a gold ramp), Dissolve-style rough edges, an inner
+// bevel and a plum drop shadow, set on a tilt with an italic slant.
+// Lowercase words can be set in a script face ("step OUT of the").
+// The expensive pixel work is cached; each frame only blits the result.
+
+let fontEpoch = 0;
+if (typeof document !== 'undefined' && document.fonts) document.fonts.addEventListener('loadingdone', () => { fontEpoch++; });
+
+const SCRIPT_FALLBACK = '"Great Vibes", cursive';
+const scriptFontStr = (G, size) => `700 ${size}px "${G.scriptFont}", ${SCRIPT_FALLBACK}`;
+const DEG = Math.PI / 180;
+
+// Split lines into runs of caps or script words, measured in design units.
+function goldRuns(ctx, s) {
+  const T = s.text, G = s.gold;
+  const raw = T.uppercase ? T.content.toUpperCase() : T.content;
+  const capsFont = fontStr(T.weight, T.size, T.font);
+  const scriptFont = scriptFontStr(G, T.size * G.scriptScale);
+  ctx.font = capsFont;
+  const space = ctx.measureText(' ').width * 1.1;
+  const capH = ctx.measureText('H').actualBoundingBoxAscent || T.size * 0.7;
+  const track = T.tracking * T.size;
+  const isScript = (w) => G.script && /[a-z]/.test(w) && w === w.toLowerCase();
+  const lines = raw.split('\n').map((str) => {
+    const words = str.split(/\s+/).filter(Boolean);
+    let x = 0;
+    const runs = words.map((w, i) => {
+      const script = isScript(w);
+      ctx.font = script ? scriptFont : capsFont;
+      const chars = [...w];
+      const width = ctx.measureText(w).width + (script ? 0 : Math.max(0, chars.length - 1) * track);
+      const r = { text: w, script, x, w: width };
+      x += width + (i < words.length - 1 ? space : 0);
+      return r;
+    });
+    return { runs, w: x };
+  });
+  const lh = T.size * T.lineHeight;
+  const bw = Math.max(1, ...lines.map((l) => l.w));
+  const bh = lines.length * lh;
+  return { lines, lh, bw, bh, capH, track, capsFont, scriptFont };
+}
+
+// Tilt + slant as one matrix (design units, origin at the block centre)
+function goldMatrix(G) {
+  const a = G.tilt * DEG, k = -Math.tan(G.slant * DEG);
+  const c = Math.cos(a), s = Math.sin(a);
+  // R · Skew, where Skew = [1 k; 0 1]
+  return [c, s, c * k - s, s * k + c];
+}
+
+function goldGeometry(ctx, s) {
+  const G = s.gold, T = s.text;
+  const R = goldRuns(ctx, s);
+  const [a, b, c, d] = goldMatrix(G);
+  const hw = R.bw / 2, hh = R.bh / 2;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const [x, y] of [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]) {
+    const X = a * x + c * y, Y = b * x + d * y;
+    minX = Math.min(minX, X); maxX = Math.max(maxX, X); minY = Math.min(minY, Y); maxY = Math.max(maxY, Y);
+  }
+  const pad = T.size * 0.25 + G.grit * 2 + G.boost;
+  const sh = G.shadowDistance + G.shadowBlur;
+  return { R, w: maxX - minX + pad * 2, h: maxY - minY + pad * 2, sh };
+}
+
+function goldLayout(ctx, s, W, H) {
+  const g = goldGeometry(ctx, s);
+  const cw = g.w + g.sh, ch = g.h + g.sh;
+  const { u, x, y } = place(s, W, H, cw, ch);
+  return { u, geo: g, card: { x, y, w: cw, h: ch } };
+}
+
+// Deterministic per-cell noise
+const hash2 = (x, y, seed) => {
+  let h = (x * 374761393 + y * 668265263 + seed * 2246822519) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+};
+
+// Separable box blur, repeated (≈ gaussian). Works on Float32 arrays in place.
+function boxBlur(src, w, h, r, passes = 2) {
+  r = Math.max(0, Math.round(r));
+  if (!r) return src;
+  const tmp = new Float32Array(src.length);
+  const inv = 1 / (r * 2 + 1);
+  for (let p = 0; p < passes; p++) {
+    for (let y = 0; y < h; y++) {
+      const o = y * w;
+      let acc = 0;
+      for (let i = -r; i <= r; i++) acc += src[o + Math.min(w - 1, Math.max(0, i))];
+      for (let x = 0; x < w; x++) {
+        tmp[o + x] = acc * inv;
+        acc += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)];
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      let acc = 0;
+      for (let i = -r; i <= r; i++) acc += tmp[Math.min(h - 1, Math.max(0, i)) * w + x];
+      for (let y = 0; y < h; y++) {
+        src[y * w + x] = acc * inv;
+        acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x];
+      }
+    }
+  }
+  return src;
+}
+
+const goldCache = new Map();
+function buildGold(s, geo, k) {
+  const G = s.gold, T = s.text;
+  const key = JSON.stringify([T.content, T.uppercase, T.font, T.weight, T.size, T.lineHeight, T.tracking, T.align, G, Math.round(k * 1000), fontEpoch]);
+  const hit = goldCache.get(key);
+  if (hit) return hit;
+
+  const dw = Math.max(2, Math.ceil(geo.w * k)), dh = Math.max(2, Math.ceil(geo.h * k));
+  const cv = document.createElement('canvas');
+  cv.width = dw; cv.height = dh;
+  const c = cv.getContext('2d', { willReadFrequently: true });
+
+  // 1. white mask of the lettering, tilted and slanted
+  const [a, b, cc, d] = goldMatrix(G);
+  c.setTransform(a * k, b * k, cc * k, d * k, dw / 2, dh / 2);
+  c.fillStyle = '#fff'; c.strokeStyle = '#fff';
+  c.lineJoin = 'round'; c.lineWidth = G.boost;
+  c.textBaseline = 'alphabetic';
+  const R = geo.R;
+  R.lines.forEach((ln, li) => {
+    const x0 = T.align === 'left' ? -R.bw / 2 : T.align === 'right' ? R.bw / 2 - ln.w : -ln.w / 2;
+    const base = -R.bh / 2 + li * R.lh + R.lh / 2 + R.capH / 2;
+    for (const run of ln.runs) {
+      c.font = run.script ? R.scriptFont : R.capsFont;
+      const draw = (str, x) => { c.fillText(str, x, base); if (G.boost > 0) c.strokeText(str, x, base); };
+      if (run.script || !R.track) draw(run.text, x0 + run.x);
+      else {
+        let x = x0 + run.x;
+        for (const ch of run.text) { draw(ch, x); x += c.measureText(ch).width + R.track; }
+      }
+    }
+  });
+
+  // 2. per-pixel glitter, bevel and rough edges
+  const img = c.getImageData(0, 0, dw, dh);
+  const px = img.data, n = dw * dh;
+  const A = new Float32Array(n);
+  for (let i = 0; i < n; i++) A[i] = px[i * 4 + 3] / 255;
+  const height = boxBlur(Float32Array.from(A), dw, dh, Math.max(1, G.bevelSize * k * 0.5), 3);
+  const soft = G.grit > 0 ? boxBlur(Float32Array.from(A), dw, dh, G.grit * k * 0.6, 2) : A;
+
+  const ramp = G.colors.map(hexToRgb);
+  const last = ramp.length - 1;
+  const cell = Math.max(1, G.grain * k);
+  // light comes from lightAngle (Photoshop convention: 0° = from the right, 90° = from the top)
+  const la = G.lightAngle * DEG, alt = 26 * DEG;
+  const Lx = Math.cos(la) * Math.cos(alt), Ly = -Math.sin(la) * Math.cos(alt), Lz = Math.sin(alt);
+  const depth = 3.4 * Math.max(1, G.bevelSize * k * 0.5);
+  const sparkle = G.sparkle * 0.05;
+
+  for (let y = 0; y < dh; y++) {
+    for (let x = 0; x < dw; x++) {
+      const i = y * dw + x, o = i * 4;
+      const sa = soft[i];
+      if (sa < 0.004) { px[o + 3] = 0; continue; }
+      // Dissolve: each pixel is fully on or off, chance = its soft coverage
+      const on = G.grit > 0 ? hash2(x, y, 7) < Math.min(1, sa * 1.15) : true;
+      if (!on) { px[o + 3] = 0; continue; }
+      const cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+      const v = hash2(cx, cy, 1) * last;
+      const j = Math.min(last - 1, Math.floor(v)), f = v - j;
+      const c0 = ramp[j], c1 = ramp[Math.min(last, j + 1)];
+      let r = c0[0] + (c1[0] - c0[0]) * f, g = c0[1] + (c1[1] - c0[1]) * f, bl = c0[2] + (c1[2] - c0[2]) * f;
+      if (hash2(cx, cy, 3) < sparkle) { r += (255 - r) * 0.85; g += (250 - g) * 0.85; bl += (235 - bl) * 0.85; }
+      // bevel: shade from the slope of the blurred mask
+      if (G.bevel > 0) {
+        const gx = (height[y * dw + Math.min(dw - 1, x + 1)] - height[y * dw + Math.max(0, x - 1)]) * depth;
+        const gy = (height[Math.min(dh - 1, y + 1) * dw + x] - height[Math.max(0, y - 1) * dw + x]) * depth;
+        const inv = 1 / Math.hypot(gx, gy, 1);
+        const shade = (-gx * Lx - gy * Ly + Lz) * inv - Lz;
+        if (shade > 0) { const h = Math.min(1, shade / (1 - Lz)) * G.bevel; r += (255 - r) * h; g += (254 - g) * h; bl += (250 - bl) * h; }
+        else { const m = 1 - Math.min(1, -shade / Lz) * G.bevel * 0.5; r *= m; g *= m; bl *= m; }
+      }
+      px[o] = r; px[o + 1] = g; px[o + 2] = bl;
+      px[o + 3] = G.grit > 0 ? 255 : px[o + 3];
+    }
+  }
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.putImageData(img, 0, 0);
+
+  goldCache.set(key, cv);
+  if (goldCache.size > 8) goldCache.delete(goldCache.keys().next().value);
+  return cv;
+}
+
+function drawGold(ctx, s, t, W, H, ds) {
+  const Lay = goldLayout(ctx, s, W, H);
+  // the box animations don't apply to lettering; "line" plays as a fade
+  const tl = timeline({ ...s, anim: { ...s.anim, inStyle: s.anim.inStyle === 'line' ? 'fade' : s.anim.inStyle, outStyle: s.anim.outStyle === 'line' ? 'fade' : s.anim.outStyle } }, t);
+  if (tl.alpha <= 0.001) return Lay;
+  const G = s.gold;
+  const k0 = Lay.u * ds, k = k0 * tl.scale;
+  const img = buildGold(s, Lay.geo, k0); // built once; pop/shrink only scales the blit
+  const { card } = Lay;
+  const cx = (card.x + card.w / 2) * Lay.u * ds, cy = (card.y + card.h / 2 + tl.dy) * Lay.u * ds;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = tl.alpha;
+  if (G.shadowOpacity > 0) {
+    const sd = G.shadowDistance * k, sa = G.shadowAngle * DEG;
+    ctx.shadowColor = rgba(G.shadowColor, G.shadowOpacity);
+    ctx.shadowBlur = G.shadowBlur * k;
+    ctx.shadowOffsetX = -Math.cos(sa) * sd;
+    ctx.shadowOffsetY = Math.sin(sa) * sd;
+  }
+  const iw = img.width * tl.scale, ih = img.height * tl.scale;
+  if (tl.scale === 1) ctx.drawImage(img, Math.round(cx - iw / 2), Math.round(cy - ih / 2));
+  else ctx.drawImage(img, cx - iw / 2, cy - ih / 2, iw, ih);
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+  ctx.globalAlpha = 1;
   return Lay;
 }

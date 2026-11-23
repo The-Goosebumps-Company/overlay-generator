@@ -26,8 +26,8 @@ public/                 The app (everything the browser loads)
   style.css             G&G design system (tokens at the top)
   app.js                UI, templates, undo/redo, export + batch, PWA, startup recovery
   renderer.js           Draws one frame at time t — shared by preview and export
-  presets.js            Built-in templates (G&G, then generic, then event libraries)
-  events.js             Event libraries: per-event palettes, gradients and names
+  presets.js            Built-in templates (G&G, then generic, then event libraries; `folder` nests them)
+  events.js             Event libraries: per-event palettes, gradients, names and gold finishes
   encode-wasm.js        In-browser ProRes/QT Animation encoding via ffmpeg.wasm
   zip.js                Fast PNG encoder, gzip and a store-only ZIP writer
   log.js                Client logging (console + server log when available)
@@ -66,7 +66,11 @@ The live preview and the export call the same function, so what you see is what 
 
 **Safe zones** (`safezones.js`) are an SVG layer over the preview canvas, never passed to `drawFrame`, so they can't end up in an export. Margins are on a 1080-wide reference and scale with the frame's short side. `computeLayout()` gives the overlay's box to check against the safe rectangle; *Move it inside* adjusts `layout.offsetX/Y` (and `scale` if it doesn't fit).
 
-**Feature flags:** event libraries are off by default. `?events=1` / `?events=0` in the URL turns them on or off and saves the choice in `localStorage` (`og-flag-events`). When off, event templates and the event chips are hidden and the swatches use the G&G palette (`EVENTS_ON` in `app.js`).
+**Feature flags:** event libraries are off by default. `?events=1` / `?events=0` in the URL turns them on or off and saves the choice in `localStorage` (`og-flag-events`). When off, event templates and the library folders are hidden and the swatches use the G&G palette (`EVENTS_ON` in `app.js`).
+
+**Library folders:** a template's location is `[event, ...folder.split('/')]` (`folderOf()` in `app.js`). The browser shows the folders and templates directly inside `libPath`, which is saved as `og-lib-path`. Each folder's cover is its first template.
+
+**Gold text** (`style: 'gold'`, settings in `state.gold`): `drawGold()` in `renderer.js` draws the lettering into a mask with the tilt and slant applied. It then shades every pixel: a grain colour picked at random from the `gold.colors` ramp, a bevel from the slope of the blurred mask, and Dissolve edges (each edge pixel is kept with a probability equal to its blurred coverage). The result is cached per design and resolution (`goldCache`), so frames only blit it with the drop shadow. A 4K build takes about 100 ms. The settings come from `Evophoria 06.psd` (pattern "glitter" with Dissolve blend, inner bevel 42°/26°, plum drop shadow `#49121F`), with no artwork copied into the repo. Snell Roundhand is an Apple system font and isn't bundled; Great Vibes (Google Fonts) is the fallback.
 
 **Batch export** runs `renderToFile()` once per row. In Chrome and Edge it writes files through the File System Access API (`showDirectoryPicker`); elsewhere it downloads them one by one.
 

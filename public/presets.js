@@ -1,3 +1,5 @@
+import { GOLD_FINISHES } from './events.js';
+
 // Built-in templates: G&G brand looks first, then general-purpose styles.
 // Shared presets saved by colleagues are loaded from the server on top of these.
 export const BUILTIN_PRESETS = [
@@ -80,6 +82,20 @@ function ev(event, name, o) {
   };
 }
 
+// Gold glitter text: no box, no motion (fade in/out can be switched on)
+function gold(name, content, { finish = 'Pale gold', size, lineHeight = 1, tracking = 0.02 }) {
+  const colors = GOLD_FINISHES.find(([n]) => n === finish)[1];
+  return {
+    name, event: 'lmc', folder: 'Evophoria 2026', style: 'gold',
+    width: 1920, height: 1080, fps: '25', duration: 5,
+    anim: { in: false, out: false, inDur: 0.8, outDur: 0.6, inStyle: 'fade', outStyle: 'fade', textStyle: 'fade' },
+    layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
+    text: { content, uppercase: false, font: 'Josefin Sans', weight: 700, size, lineHeight, tracking, color: '#F7EFCA', align: 'center', revealTint: '#E2B94F', shadow: 0 },
+    gold: { colors: [...colors] },
+    blobs: { enabled: false },
+  };
+}
+
 function eventTemplates() {
   const lowerThird = { layout: { anchor: 'bottom-left', offsetY: -3, safe: 6 }, anim: { inDur: 1.2, outDur: 0.8, textStyle: 'words' }, duration: 6 };
   // Big Week: chrome gold on a dusk sky, tall condensed type
@@ -151,6 +167,11 @@ function eventTemplates() {
       blobs: { colors: ['#EBCC2A', '#FF7ABC'] },
       badge: { enabled: true, text: '20:00', colors: ['#EBCC2A', '#EB7602', '#E00700'], weight: 700 },
     }),
+
+    // LMC → Evophoria 2026: static glitter-gold lettering from "Evophoria 06.psd"
+    gold('Evophoria · Title', 'EVOPHORIA', { finish: 'Evophoria', size: 230, tracking: 0.04 }),
+    gold('Evophoria · Step out', 'step OUT of the\nORDINARIOUS', { size: 150, lineHeight: 0.95 }),
+    gold('Evophoria · Tickets on sale', 'TICKETS on sale\nNOW', { size: 150, lineHeight: 0.95 }),
 
     ev('shimza-friends', 'S&F · Title', {
       text: { ...sf, content: 'Shimza\n& Friends', size: 150, lineHeight: 0.95, tracking: 0 },
