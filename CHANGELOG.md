@@ -2,6 +2,10 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.8.1 · Beaufort Pro for MMFF
+- MMFF crest capitals now use **Beaufort Pro Bold** as soon as it's added with **Add** (as `BeaufortPro-Bold.otf`). Fraunces still stands in until then. The font is licensed, so it isn't bundled with the app.
+- Font files in `fonts/` are now git-ignored, so a licensed font uploaded through the office server can't be published by accident. Open-licence fonts can still be shared on purpose with `git add -f`.
+
 ## 1.8.0 · MMFF crests and PNG stills
 - **New library: Magical Marble Family Fest (MMFF).** A two-part crest traced from *MMFF_2027_Overlays.ai*: top text sits in the shield, bottom text below it. Three styles: **Solid** (mint, pink and cream), **Outline** (cream lines, see-through) and **Overlay** (outline over a 15% dark tint).
 - The crest only grows **taller**: add lines to the top or bottom text and it stretches; long lines shrink to fit instead of making it wider.

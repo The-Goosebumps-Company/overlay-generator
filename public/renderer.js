@@ -50,7 +50,7 @@ export const BASE = {
     bottom: 'Also Add\nTEXT HERE',
     fill: '#83D6AC', panel: '#FF7BAC', line: '#EFFACF', topColor: '#EFFACF', bottomColor: '#00664F',
     tint: '#000000', tintOpacity: 0.15, stroke: 16,
-    capsFont: 'Fraunces', capsWeight: 900, scriptFont: 'Snell Roundhand',
+    capsFont: 'Beaufort Pro', capsWeight: 700, scriptFont: 'Snell Roundhand',
     topSize: 136, bottomSize: 125, tracking: 0,
   },
 };
@@ -686,7 +686,9 @@ const crestPath = (name) => parsedCrest[name] || (parsedCrest[name] = CREST_PATH
 // Words with a lowercase letter are set in script ("Add", "Here"), all-caps words in the serif
 const isScriptWord = (w) => /[a-z]/.test(w);
 function crestBlock(ctx, C, raw, size, maxW) {
-  const capsF = (px) => `${C.capsWeight} ${px}px "${C.capsFont}", Georgia, serif`;
+  // Beaufort Pro is licensed, so it isn't bundled: it's used once someone adds it
+  // (file "BeaufortPro-Bold.otf" registers as "BeaufortPro Bold"); Fraunces stands in until then.
+  const capsF = (px) => `${C.capsWeight} ${px}px "${C.capsFont}", "BeaufortPro Bold", "Beaufort Pro", Fraunces, Georgia, serif`;
   const scriptF = (px) => `900 ${px}px "${C.scriptFont}", ${SCRIPT_FALLBACK}`;
   const lines = String(raw || '').split('\n').map((l) => l.trim()).filter(Boolean);
   return lines.map((str) => {

@@ -54,7 +54,7 @@ The Mac installer needs no admin password and no Apple signing: it builds the ap
    - Templates are in folders, one per event (**G&G**, **LMC** and **MMFF** for now). Click a folder to open it, and use the breadcrumbs to go back. LMC → Evophoria 2026 has the gold glitter titles.
    - *Preview:* Big Week, Rage Festival and Shimza & Friends are still being finished. Add `?events=all` to the address to see them; `?events=0` hides them again.
    - *Gold glitter text:* set **Look** to *Gold glitter text* (under Text). Lowercase words are set in script, and capitals in your chosen font.
-   - *MMFF crest:* set **Look** to *MMFF crest*. Type the top text (in the shield) and the bottom text; the crest gets taller as you add lines but never wider. Pick Solid, Outline or Overlay under **Crest**.
+   - *MMFF crest:* set **Look** to *MMFF crest*. Type the top text (in the shield) and the bottom text; the crest gets taller as you add lines but never wider. Pick Solid, Outline or Overlay under **Crest**. For the real capitals, add `BeaufortPro-Bold.otf` with **Add** next to *Capitals font* (once per computer); until then Fraunces stands in.
    - *Still overlays:* designs that don't move export as a single transparent PNG (**Export PNG**). Pick a .mov format under Export if you need a video clip instead.
 2. **Type your text.** Each line in the box becomes a line on screen.
 3. **Choose the output:**

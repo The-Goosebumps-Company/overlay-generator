@@ -3,3 +3,7 @@ dist/
 node_modules/
 .claude/
 .DS_Store
+# Fonts uploaded through the office server land in fonts/. Most brand fonts are
+# licensed and this repo is public, so they stay out of git unless force-added.
+fonts/*
+!fonts/README.txt

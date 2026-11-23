@@ -5,6 +5,10 @@ Fonts in this folder are bundled into every build and load for everyone using th
 "Avenir-Next-Bold.otf" -> "Avenir Next Bold".
 
 !! This repository is PUBLIC. Only add fonts whose licence allows public distribution.
+   Font files here are git-ignored so a licensed font uploaded through the office
+   server can't be committed by accident. To share an open-licence font with every
+   build, add it on purpose: git add -f fonts/<file>
+   Licensed fonts (e.g. Beaufort Pro for MMFF) are added per computer with "Add".
    Bricolage Grotesque (the G&G typeface) is already loaded from Google Fonts.
 
 Anyone can also add a font just for themselves with the "Add" button next to the font picker.
