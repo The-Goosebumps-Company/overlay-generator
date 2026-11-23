@@ -11,20 +11,22 @@ const $ = (id) => document.getElementById(id);
 
 // ---------- brand / events ----------
 // Palettes and gradients come from the chosen event library (events.js)
-// Feature flag: event libraries are hidden unless turned on with ?events=1
-// (remembered on this computer; ?events=0 turns them off again).
-const EVENTS_ON = (() => {
+// Event libraries are on for everyone. Events still being finished (no `ready`
+// in events.js) only show with ?events=all (remembered on this computer;
+// ?events=0 hides them again).
+const SHOW_DRAFT_EVENTS = (() => {
   const q = new URLSearchParams(location.search).get('events');
-  try { if (q === '1' || q === '0') localStorage.setItem('og-flag-events', q); return localStorage.getItem('og-flag-events') === '1'; } catch { return q === '1'; }
+  try { if (q === 'all' || q === '0') localStorage.setItem('og-draft-events', q); return localStorage.getItem('og-draft-events') === 'all'; } catch { return q === 'all'; }
 })();
+const eventShown = (id) => { const e = eventById(id); return !e || e.ready || SHOW_DRAFT_EVENTS; };
 // Where the library browser is: [] = all events, ['lmc'] = an event, ['lmc', 'Evophoria 2026'] = a folder in it
-let libPath = EVENTS_ON ? loadLibPath() : [];
+let libPath = loadLibPath();
 function loadLibPath() {
-  try { const p = JSON.parse(localStorage.getItem('og-lib-path')); if (Array.isArray(p)) return p.map(String); } catch {}
-  const old = localStorage.getItem('og-event'); // before folders: the chosen event chip
-  return old && old !== 'all' ? [old] : [];
+  let p = [];
+  try { const v = JSON.parse(localStorage.getItem('og-lib-path')); if (Array.isArray(v)) p = v.map(String); } catch {}
+  return p.length && !eventShown(p[0]) ? [] : p;
 }
-const paletteId = () => (!EVENTS_ON ? 'gg' : eventById(libPath[0]) ? libPath[0] : state?.event || 'gg');
+const paletteId = () => (eventById(libPath[0]) ? libPath[0] : state?.event || 'gg');
 
 // Monoline icons (Lucide shapes, 1.5px stroke, as per the G&G iconography rules)
 const ICON_PATHS = {
@@ -833,11 +835,10 @@ function ask({ eyebrow = 'Template', title, body = '', input = null, ok = 'OK', 
 let teamLibrary = { presets: [], fonts: [] };
 const localPresets = () => JSON.parse(localStorage.getItem('og-presets') || '[]');
 const eventOf = (p) => (eventById(p.event) ? p.event : 'general');
-const isEventTemplate = (p) => eventById(p.event) && p.event !== 'gg';
 function allTemplates() {
   return [
     ...BUILTIN_PRESETS.map((p, i) => ({ key: `b:${i}`, p, tag: eventById(p.event)?.short || (p.event === 'gg' ? 'G&G' : '') }))
-      .filter(({ p }) => EVENTS_ON || !isEventTemplate(p)),
+      .filter(({ p }) => eventShown(p.event)),
     ...sharedPresets.map((p, i) => ({ key: `s:${i}`, p, tag: 'Team' })),
     ...localPresets().map((p, i) => ({ key: `l:${i}`, p, tag: 'Mine' })),
   ];
@@ -848,7 +849,6 @@ const folderOf = (p) => [eventOf(p), ...String(p.folder || '').split('/').map((x
 const within = (path, f) => path.every((seg, i) => f[i] === seg);
 function libraryView() {
   const all = allTemplates();
-  if (!EVENTS_ON) return { folders: [], items: all };
   const inside = all.filter(({ p }) => within(libPath, folderOf(p)));
   const items = inside.filter(({ p }) => folderOf(p).length === libPath.length);
   const sub = new Map();
@@ -870,8 +870,6 @@ const folderName = (depth, id) => (depth === 0 ? (eventById(id) || GENERAL).name
 const folderAccent = (path) => (eventById(path[0]) || GENERAL).accent;
 function renderCrumbs() {
   const nav = $('libCrumbs');
-  nav.hidden = !EVENTS_ON;
-  if (!EVENTS_ON) return;
   const parts = [{ label: 'All events', depth: 0 }, ...libPath.map((id, i) => ({ label: i === 0 ? eventLabel(eventById(id)) || GENERAL.name : id, depth: i + 1 }))];
   nav.innerHTML = (libPath.length ? `<button type="button" class="btn ghost icon-only crumb-back" aria-label="Back"><i data-icon="back"></i></button>` : '')
     + parts.map((c, i) => (i === parts.length - 1
@@ -933,7 +931,7 @@ async function renderTemplates() {
     c.width = 320; c.height = Math.round(320 * s.height / s.width);
     c.style.objectFit = 'contain';
     b.appendChild(c);
-    b.insertAdjacentHTML('beforeend', `${tag && (!EVENTS_ON || tag === 'Team' || tag === 'Mine') ? `<span class="tpl-tag">${tag}</span>` : ''}<span class="tpl-name">${p.name.replace(/^[^·]{1,30} · /, '').replace(/\s*\(\d+\s*[×x]\s*\d+\)\s*$/, '')}</span>`);
+    b.insertAdjacentHTML('beforeend', `${tag === 'Team' || tag === 'Mine' ? `<span class="tpl-tag">${tag}</span>` : ''}<span class="tpl-name">${p.name.replace(/^[^·]{1,30} · /, '').replace(/\s*\(\d+\s*[×x]\s*\d+\)\s*$/, '')}</span>`);
     b.onclick = () => selectTemplate(key);
     box.appendChild(b);
     ensureFonts(s).then(() => drawFrame(c.getContext('2d'), s, holdTime(s), s.width, s.height));
@@ -971,7 +969,7 @@ function setupTemplates() {
     const name = await ask({ title: 'Save as a template', body: server.ok ? 'Everyone using the office server will see it.' : 'It’s saved on this computer.', input: { value: suggestion, placeholder: 'e.g. Main stage schedule' }, ok: 'Save template' });
     if (!name) return;
     state.name = name.trim();
-    if (EVENTS_ON && libPath.length) { // file it in the open library folder
+    if (libPath.length) { // file it in the open library folder
       state.event = eventById(libPath[0]) ? libPath[0] : undefined;
       state.folder = libPath.slice(1).join('/') || undefined;
     }

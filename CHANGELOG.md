@@ -2,6 +2,11 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.7.0 · Libraries for everyone
+- Template libraries no longer need `?events=1`: the app opens on the **G&G** and **LMC** folders.
+- The general templates (Blue glass title, Purple schedule, Lower third – left) are now in the G&G folder.
+- Big Week, Rage Festival and Shimza & Friends are hidden while they're being finished. Open the app with `?events=all` to see them, and `?events=0` to hide them again.
+
 ## 1.6.0 · Library folders and gold text
 - **Library folders** (with `?events=1`): templates are now browsed like a gallery. Each event is a folder with a cover preview. Open it to see its templates and any folders inside (for example LMC → Evophoria 2026). Breadcrumbs and the back button take you up a level, and the app remembers where you were.
 - **Gold glitter text:** a new *Look* next to the glow box. It recreates the LMC "Evophoria" Photoshop lettering in the app: a glitter-gold fill, rough Dissolve-style edges, a soft bevel and a plum drop shadow, set on a tilt with an italic slant. Type anything you like.

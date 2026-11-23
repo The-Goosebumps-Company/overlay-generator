@@ -3,10 +3,11 @@
 // (LMC from its official ASE swatches). Fonts are the closest free Google
 // Fonts; drop the real brand font in with "Add" next to the font picker.
 // No logos or artist imagery here: the repo is public.
+// `ready: true` shows an event to everyone; the rest only with ?events=all.
 
 export const EVENTS = [
   {
-    id: 'gg', name: 'G&G', accent: '#FB690C',
+    id: 'gg', name: 'G&G', accent: '#FB690C', ready: true,
     colors: [['Pyro Amber', '#FB690C'], ['Crimson Surge', '#790000'], ['Aqua Beam', '#044E61'], ['Backline Blue', '#071A26']],
     card: [['Pyro', ['#FB690C', '#790000']], ['Frequency', ['#0B6F88', '#044E61', '#071A26']], ['Pyro → Aqua', ['#FB690C', '#044E61']]],
     blobs: [['Pyro', ['#FB690C', '#FFB36B']], ['Aqua', ['#0B6F88', '#3FB6CF']], ['Mixed', ['#FB690C', '#0B6F88']]],
@@ -24,7 +25,7 @@ export const EVENTS = [
     blobs: [['Pink', ['#FF2E88', '#FF8AC4']], ['Party', ['#FF2E88', '#7FD3FF', '#FFD60A']], ['Lime', ['#7ED957', '#FFD60A']]],
   },
   {
-    id: 'lmc', name: 'Luxurious Marble Circus', short: 'LMC', accent: '#EB7602',
+    id: 'lmc', name: 'Luxurious Marble Circus', short: 'LMC', accent: '#EB7602', ready: true,
     colors: [['Red', '#E00700'], ['Blue', '#204CA5'], ['Orange', '#EB7602'], ['Crimson', '#970201'], ['Olive', '#808000'], ['Cream', '#F1EAB5'], ['Yellow', '#EBCC2A'], ['Hot pink', '#FF7ABC']],
     card: [['Big top', ['#EBCC2A', '#EB7602', '#E00700']], ['Marble blue', ['#204CA5', '#970201']], ['Crimson', ['#E00700', '#970201']], ['Pantry olive', ['#E1DD99', '#808000']]],
     blobs: [['Gold', ['#EBCC2A', '#EB7602']], ['Pink', ['#FF7ABC', '#FFD0D9']], ['Blue', ['#204CA5', '#C5D6FD']]],

@@ -1,6 +1,6 @@
 import { GOLD_FINISHES } from './events.js';
 
-// Built-in templates: G&G brand looks first, then general-purpose styles.
+// Built-in templates: G&G brand looks first (all in the G&G library), then event libraries.
 // Shared presets saved by colleagues are loaded from the server on top of these.
 export const BUILTIN_PRESETS = [
   {
@@ -34,7 +34,7 @@ export const BUILTIN_PRESETS = [
     badge: { enabled: true, text: '21:30', size: 100, weight: 800, padX: 80, padY: 26, radius: 18, gap: 44, colors: ['#FB690C', '#790000'], angle: 135, glow: 40, opacity: 1, scramble: true },
   },
   {
-    name: 'Blue glass title (1080×1080)',
+    name: 'Blue glass title (1080×1080)', event: 'gg',
     width: 1080, height: 1080, fps: '29.97', duration: 3.5,
     anim: { in: true, out: true, inDur: 1.3, outDur: 0.8, inStyle: 'line', outStyle: 'line', textStyle: 'cascade' },
     layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
@@ -44,7 +44,7 @@ export const BUILTIN_PRESETS = [
     badge: { enabled: false, text: '14:10', size: 60, weight: 700, padX: 36, padY: 14, radius: 12, gap: 28, colors: ['#5b45e6', '#c63fb6'], angle: 0, glow: 30, opacity: 1, scramble: true },
   },
   {
-    name: 'Schedule – Purple with time (1920×1080)',
+    name: 'Schedule – Purple with time (1920×1080)', event: 'gg',
     width: 1920, height: 1080, fps: '25', duration: 5.5,
     anim: { in: true, out: true, inDur: 1.8, outDur: 0.9, inStyle: 'line', outStyle: 'line', textStyle: 'cascade' },
     layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
@@ -54,7 +54,7 @@ export const BUILTIN_PRESETS = [
     badge: { enabled: true, text: '14:10', size: 104, weight: 700, padX: 84, padY: 30, radius: 14, gap: 44, colors: ['#5a3fe0', '#a03cc0', '#c63ab4'], angle: 0, glow: 36, opacity: 1, scramble: true },
   },
   {
-    name: 'Lower third – left (1920×1080)',
+    name: 'Lower third – left (1920×1080)', event: 'gg',
     width: 1920, height: 1080, fps: '25', duration: 6,
     anim: { in: true, out: true, inDur: 1.2, outDur: 0.8, inStyle: 'line', outStyle: 'line', textStyle: 'cascade' },
     layout: { anchor: 'bottom-left', offsetX: 0, offsetY: -4, scale: 1, safe: 6, autoFit: true },

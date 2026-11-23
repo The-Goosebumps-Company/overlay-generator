@@ -66,7 +66,7 @@ The live preview and the export call the same function, so what you see is what 
 
 **Safe zones** (`safezones.js`) are an SVG layer over the preview canvas, never passed to `drawFrame`, so they can't end up in an export. Margins are on a 1080-wide reference and scale with the frame's short side. `computeLayout()` gives the overlay's box to check against the safe rectangle; *Move it inside* adjusts `layout.offsetX/Y` (and `scale` if it doesn't fit).
 
-**Feature flags:** event libraries are off by default. `?events=1` / `?events=0` in the URL turns them on or off and saves the choice in `localStorage` (`og-flag-events`). When off, event templates and the library folders are hidden and the swatches use the G&G palette (`EVENTS_ON` in `app.js`).
+**Draft events:** only events marked `ready: true` in `events.js` (G&G and LMC) are shown. `?events=all` / `?events=0` in the URL shows or hides the rest and saves the choice in `localStorage` (`og-draft-events`; see `eventShown()` in `app.js`). Templates without an event (Team or Mine) appear in a *General* folder.
 
 **Library folders:** a template's location is `[event, ...folder.split('/')]` (`folderOf()` in `app.js`). The browser shows the folders and templates directly inside `libPath`, which is saved as `og-lib-path`. Each folder's cover is its first template.
 
