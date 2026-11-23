@@ -2,6 +2,10 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.8.2 · Beaufort Pro Heavy
+- MMFF crest capitals use **Beaufort Pro Heavy**, as in the artwork. Light, Medium, Bold and Heavy come with the office server and the Mac app.
+- The public website doesn't include them; there, add `BeaufortPro-Heavy.otf` with **Add** once (Fraunces stands in until then).
+
 ## 1.8.1 · Beaufort Pro for MMFF
 - MMFF crest capitals now use **Beaufort Pro Bold** as soon as it's added with **Add** (as `BeaufortPro-Bold.otf`). Fraunces still stands in until then. The font is licensed, so it isn't bundled with the app.
 - Font files in `fonts/` are now git-ignored, so a licensed font uploaded through the office server can't be published by accident. Open-licence fonts can still be shared on purpose with `git add -f`.

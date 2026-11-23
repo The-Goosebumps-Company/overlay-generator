@@ -115,7 +115,7 @@ const SECTIONS = [
   ] },
   { title: 'Crest', open: true, show: isCrest, items: [
     { k: 'crest.variant', type: 'select', label: 'Style', options: [['solid', 'Solid (filled)'], ['outline', 'Outline (see-through)'], ['overlay', 'Overlay (outline + tint)']] },
-    { k: 'crest.capsFont', type: 'font', label: 'Capitals font', help: 'Beaufort Pro isn’t bundled (it’s licensed). Add BeaufortPro-Bold.otf with Add; until then Fraunces stands in.' },
+    { k: 'crest.capsFont', type: 'font', label: 'Capitals font', help: 'Beaufort Pro comes with the office server and the Mac app. On the website, add BeaufortPro-Heavy.otf with Add once; until then Fraunces stands in.' },
     { k: 'crest.scriptFont', type: 'font', label: 'Script font' },
     { k: 'crest.topSize', type: 'range', label: 'Top text size', min: 40, max: 220, step: 1 },
     { k: 'crest.bottomSize', type: 'range', label: 'Bottom text size', min: 40, max: 220, step: 1 },
@@ -379,7 +379,7 @@ async function loadFonts() {
 async function ensureFonts(s = state) {
   const loads = [document.fonts.load(fontStr(s.text.weight, 40, s.text.font), s.text.content || 'A')];
   if (s.badge.enabled) loads.push(document.fonts.load(fontStr(s.badge.weight, 40, s.text.font), s.badge.text || '0'));
-  if (s.style === 'crest') loads.push(document.fonts.load(`${s.crest.capsWeight} 40px "${s.crest.capsFont}", "BeaufortPro Bold", Fraunces`, 'TEXT'), document.fonts.load('900 40px Fraunces', 'TEXT'), document.fonts.load(`900 40px "${s.crest.scriptFont}"`, 'Add'), document.fonts.load('400 40px "Great Vibes"', 'a'));
+  if (s.style === 'crest') loads.push(document.fonts.load(`${s.crest.capsWeight} 40px "${s.crest.capsFont}", "BeaufortPro Heavy", Fraunces`, 'TEXT'), document.fonts.load('900 40px Fraunces', 'TEXT'), document.fonts.load(`900 40px "${s.crest.scriptFont}"`, 'Add'), document.fonts.load('400 40px "Great Vibes"', 'a'));
   if (s.style === 'gold' && s.gold.script) loads.push(document.fonts.load(fontStr(700, 40, s.gold.scriptFont), s.text.content || 'a'), document.fonts.load(fontStr(400, 40, 'Great Vibes'), 'a'));
   try { await Promise.all(loads); } catch {}
 }
