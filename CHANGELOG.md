@@ -2,6 +2,13 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.8.0 · MMFF crests and PNG stills
+- **New library: Magical Marble Family Fest (MMFF).** A two-part crest traced from *MMFF_2027_Overlays.ai*: top text sits in the shield, bottom text below it. Three styles: **Solid** (mint, pink and cream), **Outline** (cream lines, see-through) and **Overlay** (outline over a 15% dark tint).
+- The crest only grows **taller**: add lines to the top or bottom text and it stretches; long lines shrink to fit instead of making it wider.
+- Words with lowercase letters are set in Snell Roundhand, ALL-CAPS words in Fraunces 900, a free stand-in for Beaufort Pro Heavy. Add the real font with **Add** next to *Capitals font*.
+- **PNG stills:** designs that don't move (gold text, crests, or anything with in/out and moving light off) now export as one transparent **PNG** at full size instead of a video. The format switches automatically, and the button reads *Export PNG*. Batch export makes one PNG per row.
+- Batch export for crests: the first column is the top text, the second is the bottom, and ` / ` inside a cell starts a new line.
+
 ## 1.7.0 · Libraries for everyone
 - Template libraries no longer need `?events=1`: the app opens on the **G&G** and **LMC** folders.
 - The general templates (Blue glass title, Purple schedule, Lower third – left) are now in the G&G folder.

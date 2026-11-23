@@ -96,6 +96,19 @@ function gold(name, content, { finish = 'Pale gold', size, lineHeight = 1, track
   };
 }
 
+// MMFF crest: portrait, no motion (fade in/out can be switched on)
+function crest(name, variant, bottom = 'Also Add\nTEXT HERE') {
+  return {
+    name, event: 'mmff', style: 'crest',
+    width: 1080, height: 1920, fps: '25', duration: 5,
+    anim: { in: false, out: false, inDur: 0.8, outDur: 0.6, inStyle: 'fade', outStyle: 'fade', textStyle: 'fade' },
+    layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
+    text: { content: 'Add\nTEXT\nHere', uppercase: false },
+    crest: { variant, bottom },
+    blobs: { enabled: false },
+  };
+}
+
 function eventTemplates() {
   const lowerThird = { layout: { anchor: 'bottom-left', offsetY: -3, safe: 6 }, anim: { inDur: 1.2, outDur: 0.8, textStyle: 'words' }, duration: 6 };
   // Big Week: chrome gold on a dusk sky, tall condensed type
@@ -172,6 +185,12 @@ function eventTemplates() {
     gold('Evophoria · Title', 'EVOPHORIA', { finish: 'Evophoria', size: 230, tracking: 0.04 }),
     gold('Evophoria · Step out', 'step OUT of the\nORDINARIOUS', { size: 150, lineHeight: 0.95 }),
     gold('Evophoria · Tickets on sale', 'TICKETS on sale\nNOW', { size: 150, lineHeight: 0.95 }),
+
+    // MMFF: two-part crest (top text in the shield, bottom text below), still PNGs
+    crest('MMFF · Solid crest', 'solid'),
+    crest('MMFF · Outline crest', 'outline'),
+    crest('MMFF · Overlay crest', 'overlay'),
+    crest('MMFF · Overlay crest, long list', 'overlay', 'Also Add\nTEXT HERE\nTEXT HERE\nTEXT HERE\nTEXT HERE'),
 
     ev('shimza-friends', 'S&F · Title', {
       text: { ...sf, content: 'Shimza\n& Friends', size: 150, lineHeight: 0.95, tracking: 0 },

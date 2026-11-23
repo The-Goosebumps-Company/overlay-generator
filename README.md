@@ -51,9 +51,11 @@ The Mac installer needs no admin password and no Apple signing: it builds the ap
 ### Make an overlay
 
 1. **Pick a template.** The G&G ones come first: *Pyro title*, *Frequency lower third* and *Schedule with time*.
-   - Templates are in folders, one per event (**G&G** and **LMC** for now). Click a folder to open it, and use the breadcrumbs to go back. LMC → Evophoria 2026 has the gold glitter titles.
+   - Templates are in folders, one per event (**G&G**, **LMC** and **MMFF** for now). Click a folder to open it, and use the breadcrumbs to go back. LMC → Evophoria 2026 has the gold glitter titles.
    - *Preview:* Big Week, Rage Festival and Shimza & Friends are still being finished. Add `?events=all` to the address to see them; `?events=0` hides them again.
    - *Gold glitter text:* set **Look** to *Gold glitter text* (under Text). Lowercase words are set in script, and capitals in your chosen font.
+   - *MMFF crest:* set **Look** to *MMFF crest*. Type the top text (in the shield) and the bottom text; the crest gets taller as you add lines but never wider. Pick Solid, Outline or Overlay under **Crest**.
+   - *Still overlays:* designs that don't move export as a single transparent PNG (**Export PNG**). Pick a .mov format under Export if you need a video clip instead.
 2. **Type your text.** Each line in the box becomes a line on screen.
 3. **Choose the output:**
    - **Shape:** Landscape (YouTube, TV, screens), Portrait (Reels, TikTok, Stories), Square (feed posts) or Feed 4:5 (Instagram portrait posts).

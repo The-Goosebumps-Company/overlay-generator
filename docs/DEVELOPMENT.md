@@ -66,6 +66,10 @@ The live preview and the export call the same function, so what you see is what 
 
 **Safe zones** (`safezones.js`) are an SVG layer over the preview canvas, never passed to `drawFrame`, so they can't end up in an export. Margins are on a 1080-wide reference and scale with the frame's short side. `computeLayout()` gives the overlay's box to check against the safe rectangle; *Move it inside* adjusts `layout.offsetX/Y` (and `scale` if it doesn't fit).
 
+**MMFF crest** (`style: 'crest'`, settings in `state.crest`): the outer badge, shield and panel paths in `CREST_PATHS` are traced from *MMFF_2027_Overlays.ai* (1080 × 1920 pt, y up). All their sides are straight vertical lines, so `buildCrest()` stretches the crest by moving every point below `CREST.topSplit` down by the top block's extra lines and every point below `CREST.bottomSplit` down by the bottom block's. The width is fixed; `crestBlock()` shrinks a line's font size if it's too wide. Words with a lowercase letter use the script font. The result is cached like gold text.
+
+**PNG stills:** `isStatic()` in `app.js` is true when a design has no in/out animation and no moving light. `syncFormat()` then selects the `still` format, and `renderToFile()` writes one PNG of the frame at `holdTime()`. The format only switches when a design changes between moving and still, so a manual choice sticks.
+
 **Draft events:** only events marked `ready: true` in `events.js` (G&G and LMC) are shown. `?events=all` / `?events=0` in the URL shows or hides the rest and saves the choice in `localStorage` (`og-draft-events`; see `eventShown()` in `app.js`). Templates without an event (Team or Mine) appear in a *General* folder.
 
 **Library folders:** a template's location is `[event, ...folder.split('/')]` (`folderOf()` in `app.js`). The browser shows the folders and templates directly inside `libPath`, which is saved as `og-lib-path`. Each folder's cover is its first template.

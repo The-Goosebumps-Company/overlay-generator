@@ -31,6 +31,13 @@ export const EVENTS = [
     blobs: [['Gold', ['#EBCC2A', '#EB7602']], ['Pink', ['#FF7ABC', '#FFD0D9']], ['Blue', ['#204CA5', '#C5D6FD']]],
   },
   {
+    // Magical Marble Family Fest: mint, pink and cream from MMFF_2027_Overlays.ai
+    id: 'mmff', name: 'Magical Marble Family Fest', short: 'MMFF', accent: '#FF7BAC', ready: true,
+    colors: [['Mint', '#83D6AC'], ['Pink', '#FF7BAC'], ['Cream', '#EFFACF'], ['Forest', '#00664F']],
+    card: [['Mint', ['#83D6AC', '#00664F']], ['Pink', ['#FF7BAC', '#83D6AC']]],
+    blobs: [['Pink', ['#FF7BAC', '#EFFACF']], ['Mint', ['#83D6AC', '#EFFACF']]],
+  },
+  {
     id: 'shimza-friends', name: 'Shimza & Friends', short: 'S&F', accent: '#FDB75B',
     colors: [['Amber', '#FDB75B'], ['Flame', '#D9432B'], ['Navy', '#0B2A40'], ['Deep navy', '#071C2C'], ['Sunset orange', '#F07C2F']],
     card: [['Flame', ['#FDB75B', '#F07C2F', '#D9432B']], ['Navy', ['#1D4E70', '#0B2A40', '#071C2C']], ['Navy → flame', ['#0B2A40', '#D9432B']]],

@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="Overlays">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Josefin+Sans:wght@400;600;700&family=Great+Vibes&family=Luckiest+Guy&family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Krona+One&family=Lexend:wght@400;500;600;700;800;900&family=Michroma&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Unbounded:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Josefin+Sans:wght@400;600;700&family=Great+Vibes&family=Fraunces:opsz,wght@9..144,900&family=Luckiest+Guy&family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Krona+One&family=Lexend:wght@400;500;600;700;800;900&family=Michroma&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Unbounded:wght@400;500;600;700;800;900&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -126,6 +126,7 @@
       <h2 class="eyebrow">Export</h2>
       <label class="row">Format
         <select id="formatSelect">
+          <option value="still">PNG image (still) · .png</option>
           <option value="prores">ProRes 4444 + alpha · .mov</option>
           <option value="qtrle">QuickTime Animation + alpha · .mov</option>
           <option value="png">PNG sequence · .zip</option>
@@ -138,6 +139,7 @@
         <p><b>Premiere / After Effects:</b> drop the .mov on a track above your footage. Transparency just works. (AE: <i>Premultiplied – matted with black</i>.)</p>
         <p><b>DaVinci Resolve:</b> put it on V2. If the background shows black, right-click the clip in the Media Pool → <i>Clip Attributes…</i> → <i>Video</i> → <i>Alpha Mode: Premultiplied</i>. You can select several clips and do them all at once.</p>
         <p><b>PNG sequence:</b> unzip and import the first frame as an image sequence.</p>
+        <p><b>PNG image:</b> one transparent picture. Designs that don't move export this way automatically; drop it on a track and stretch it to any length.</p>
       </details>
     </div>
 

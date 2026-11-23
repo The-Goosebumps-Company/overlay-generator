@@ -59,7 +59,7 @@ const setIcon = (btn, name) => { const i = btn.querySelector('i[data-icon]'); if
 const ctlTimers = {};
 const logControl = (k, v) => { clearTimeout(ctlTimers[k]); ctlTimers[k] = setTimeout(() => log('info', 'edit', { control: k, value: Array.isArray(v) ? v.join(',') : v }), 800); };
 
-const GOOGLE_FONTS = ['Bricolage Grotesque', 'Josefin Sans', 'Snell Roundhand', 'Great Vibes', 'Luckiest Guy', 'Krona One', 'Figtree', 'Montserrat', 'Inter', 'Poppins', 'DM Sans', 'Archivo', 'Lexend', 'Unbounded', 'Syne', 'Space Grotesk', 'Michroma', 'Oswald', 'Bebas Neue', 'Anton'];
+const GOOGLE_FONTS = ['Bricolage Grotesque', 'Josefin Sans', 'Snell Roundhand', 'Great Vibes', 'Fraunces', 'Luckiest Guy', 'Krona One', 'Figtree', 'Montserrat', 'Inter', 'Poppins', 'DM Sans', 'Archivo', 'Lexend', 'Unbounded', 'Syne', 'Space Grotesk', 'Michroma', 'Oswald', 'Bebas Neue', 'Anton'];
 const customFonts = new Set();
 
 let state = loadCurrent() || normalize(BUILTIN_PRESETS[0]);
@@ -72,17 +72,22 @@ let currentTemplate = localStorage.getItem('og-template') || 'b:0';
 const WEIGHTS = [200, 300, 400, 500, 600, 700, 800, 900];
 // `show` hides a section or control that doesn't apply to the current look
 const isGold = (s) => s.style === 'gold';
-const notGold = (s) => !isGold(s);
+const isCrest = (s) => s.style === 'crest';
+const isGlow = (s) => !isGold(s) && !isCrest(s);
+const notGold = isGlow; // text colour, reveal and the box sections only apply to the glow box
+const notCrest = (s) => !isCrest(s);
 const SECTIONS = [
   { title: 'Text', open: true, items: [
-    { k: 'style', type: 'select', label: 'Look', options: [['glow', 'Glow box'], ['gold', 'Gold glitter text']] },
-    { k: 'text.content', type: 'textarea', label: 'Your text', help: 'Each line in the box becomes a line on screen.' },
-    { k: 'text.font', type: 'font', label: 'Font' },
-    { k: 'text.weight', type: 'select', label: 'Weight', options: WEIGHTS },
-    { k: 'text.size', type: 'range', label: 'Size', min: 12, max: 220, step: 1 },
-    { k: 'text.lineHeight', type: 'range', label: 'Line height', min: 0.7, max: 2, step: 0.01 },
-    { k: 'text.tracking', type: 'range', label: 'Letter spacing', min: -0.1, max: 0.5, step: 0.005 },
-    { k: 'text.align', type: 'select', label: 'Align', options: [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']] },
+    { k: 'style', type: 'select', label: 'Look', options: [['glow', 'Glow box'], ['gold', 'Gold glitter text'], ['crest', 'MMFF crest (two-part)']] },
+    { k: 'text.content', type: 'textarea', label: 'Your text', help: 'Each line in the box becomes a line on screen.', show: notCrest },
+    { k: 'text.content', type: 'textarea', label: 'Top text (in the shield)', help: 'Words with lowercase letters are set in script, ALL-CAPS words in the serif. Each line is a line on screen; more lines make the crest taller.', show: isCrest },
+    { k: 'crest.bottom', type: 'textarea', label: 'Bottom text', help: 'Same rules. Long lines shrink to fit; the crest never gets wider.', show: isCrest },
+    { k: 'text.font', type: 'font', label: 'Font', show: notCrest },
+    { k: 'text.weight', type: 'select', label: 'Weight', options: WEIGHTS, show: notCrest },
+    { k: 'text.size', type: 'range', label: 'Size', min: 12, max: 220, step: 1, show: notCrest },
+    { k: 'text.lineHeight', type: 'range', label: 'Line height', min: 0.7, max: 2, step: 0.01, show: notCrest },
+    { k: 'text.tracking', type: 'range', label: 'Letter spacing', min: -0.1, max: 0.5, step: 0.005, show: notCrest },
+    { k: 'text.align', type: 'select', label: 'Align', options: [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']], show: notCrest },
     { k: 'text.uppercase', type: 'check', label: 'All caps' },
     { k: 'text.color', type: 'color', label: 'Colour', show: notGold },
     { k: 'text.revealTint', type: 'color', label: 'Reveal tint', show: notGold },
@@ -107,6 +112,22 @@ const SECTIONS = [
     { k: 'gold.shadowDistance', type: 'range', label: 'Shadow distance', min: 0, max: 80, step: 0.5 },
     { k: 'gold.shadowBlur', type: 'range', label: 'Shadow softness', min: 0, max: 80, step: 0.5 },
     { k: 'gold.shadowAngle', type: 'range', label: 'Shadow angle°', min: 0, max: 360, step: 1 },
+  ] },
+  { title: 'Crest', open: true, show: isCrest, items: [
+    { k: 'crest.variant', type: 'select', label: 'Style', options: [['solid', 'Solid (filled)'], ['outline', 'Outline (see-through)'], ['overlay', 'Overlay (outline + tint)']] },
+    { k: 'crest.capsFont', type: 'font', label: 'Capitals font' },
+    { k: 'crest.scriptFont', type: 'font', label: 'Script font' },
+    { k: 'crest.topSize', type: 'range', label: 'Top text size', min: 40, max: 220, step: 1 },
+    { k: 'crest.bottomSize', type: 'range', label: 'Bottom text size', min: 40, max: 220, step: 1 },
+    { k: 'crest.tracking', type: 'range', label: 'Capitals spacing', min: -0.05, max: 0.3, step: 0.005 },
+    { k: 'crest.fill', type: 'color', label: 'Crest fill', show: (s) => s.crest.variant === 'solid' },
+    { k: 'crest.panel', type: 'color', label: 'Shield fill', show: (s) => s.crest.variant === 'solid' },
+    { k: 'crest.line', type: 'color', label: 'Lines (and text when see-through)' },
+    { k: 'crest.topColor', type: 'color', label: 'Top text', show: (s) => s.crest.variant === 'solid' },
+    { k: 'crest.bottomColor', type: 'color', label: 'Bottom text', show: (s) => s.crest.variant === 'solid' },
+    { k: 'crest.stroke', type: 'range', label: 'Outline width', min: 2, max: 40, step: 0.5, show: (s) => s.crest.variant !== 'solid' },
+    { k: 'crest.tint', type: 'color', label: 'Tint colour', show: (s) => s.crest.variant === 'overlay' },
+    { k: 'crest.tintOpacity', type: 'range', label: 'Tint strength', min: 0, max: 1, step: 0.01, show: (s) => s.crest.variant === 'overlay' },
   ] },
   { title: 'Animation', open: true, items: [
     { k: 'anim.in', type: 'check', label: 'Animate in' },
@@ -226,7 +247,7 @@ function makeControl(it) {
   wrap.className = 'ctl';
   const id = `c${++uid}`;
   const label = `<label for="${id}">${it.label}</label>`;
-  const commit = (v) => { setP(state, it.k, v); logControl(it.k, v); changed(); if (it.k === 'style') syncControls(); };
+  const commit = (v) => { setP(state, it.k, v); logControl(it.k, v); changed(); if (it.k === 'style' || it.k === 'crest.variant' || it.k.startsWith('anim.') || it.k.startsWith('blobs.')) { syncControls(); syncFormat(); } };
   if (it.type === 'range') {
     wrap.innerHTML = `${label}<input id="${id}" type="range" min="${it.min}" max="${it.max}" step="${it.step}"><span class="val"><input type="number" step="${it.step}" aria-label="${it.label} value"></span>`;
     const [r, n] = wrap.querySelectorAll('input');
@@ -358,6 +379,7 @@ async function loadFonts() {
 async function ensureFonts(s = state) {
   const loads = [document.fonts.load(fontStr(s.text.weight, 40, s.text.font), s.text.content || 'A')];
   if (s.badge.enabled) loads.push(document.fonts.load(fontStr(s.badge.weight, 40, s.text.font), s.badge.text || '0'));
+  if (s.style === 'crest') loads.push(document.fonts.load(`${s.crest.capsWeight} 40px "${s.crest.capsFont}"`, 'TEXT'), document.fonts.load(`900 40px "${s.crest.scriptFont}"`, 'Add'), document.fonts.load('400 40px "Great Vibes"', 'a'));
   if (s.style === 'gold' && s.gold.script) loads.push(document.fonts.load(fontStr(700, 40, s.gold.scriptFont), s.text.content || 'a'), document.fonts.load(fontStr(400, 40, 'Great Vibes'), 'a'));
   try { await Promise.all(loads); } catch {}
 }
@@ -502,6 +524,7 @@ function syncOutputUI() {
   $('resW').value = state.width; $('resH').value = state.height;
   $('fpsSelect').value = state.fps;
   $('durInput').value = state.duration;
+  syncFormat();
 }
 function setSize(w, h) {
   state.width = w; state.height = h;
@@ -532,17 +555,36 @@ function setupOutput() {
   $('resW').onchange = custom; $('resH').onchange = custom;
   $('fpsSelect').onchange = () => { state.fps = $('fpsSelect').value; changed(); };
   $('durInput').onchange = () => { state.duration = Math.max(0.5, +$('durInput').value || 5); changed(); };
-  $('formatSelect').onchange = updateFormatHint;
+  $('formatSelect').onchange = () => { if ($('formatSelect').value !== 'still') videoFormat = $('formatSelect').value; updateFormatHint(); };
+}
+
+// A design that doesn't move exports as one PNG instead of a video. The format
+// switches only when the design changes between moving and still, so a manual
+// choice sticks until then.
+const isStatic = (s) => !s.anim.in && !s.anim.out && (s.style !== 'glow' || !s.blobs.enabled || !s.blobs.count || !s.blobs.intensity);
+let videoFormat = 'prores', lastStatic = null;
+function syncFormat() {
+  const still = isStatic(state);
+  if (still === lastStatic) return;
+  lastStatic = still;
+  const sel = $('formatSelect');
+  if (still && sel.value !== 'still') { videoFormat = sel.value; sel.value = 'still'; }
+  else if (!still && sel.value === 'still') sel.value = videoFormat;
+  updateFormatHint();
 }
 function updateFormatHint() {
   const f = $('formatSelect').value;
+  const btn = $('exportBtn');
+  btn.querySelector('span').textContent = f === 'still' ? 'Export PNG' : 'Export overlay';
+  setIcon(btn, f === 'still' ? 'image' : 'film');
   const hints = {
+    still: isStatic(state) ? 'This design doesn’t move, so it saves as one transparent PNG at full size.' : 'Saves one transparent PNG of the design fully on screen. Switch on a video format to keep the animation.',
     prores: 'The one to pick. Plays smoothly in Premiere, After Effects and Resolve.',
     qtrle: 'Lossless, same codec the design team uses. Big files, can stutter in Resolve.',
     png: 'Lossless frames in a .zip. Works in every editing app.',
   };
   let h = hints[f];
-  if (f !== 'png' && !server.ffmpeg) h += ' Encoded on this computer, so it takes a little longer.';
+  if (f !== 'png' && f !== 'still' && !server.ffmpeg) h += ' Encoded on this computer, so it takes a little longer.';
   $('formatHint').textContent = h;
 }
 
@@ -560,7 +602,7 @@ function progress(p, text) {
   $('progressBar').style.width = `${Math.round((p || 0) * 100)}%`;
   $('progressText').textContent = text || '';
 }
-const nameFor = (s) => slug(s.text.content.split('\n').join(' '));
+const nameFor = (s) => slug([s.text.content, s.style === 'crest' ? s.crest.bottom : ''].join(' ').split('\n').join(' '));
 const outName = () => nameFor(state);
 
 let exporting = false, cancelRequested = false;
@@ -573,7 +615,7 @@ function setExporting(on) {
   $('stillBtn').disabled = on;
   $('batchBtn').disabled = on;
 }
-const engineFor = (fmt) => (fmt === 'png' ? 'browser' : server.ffmpeg ? 'server' : 'browser-ffmpeg');
+const engineFor = (fmt) => (fmt === 'png' || fmt === 'still' ? 'browser' : server.ffmpeg ? 'server' : 'browser-ffmpeg');
 
 // Video exports use PREMULTIPLIED alpha (colour × alpha, matted with black) — the
 // After Effects / ProRes 4444 convention the design team's files use. DaVinci Resolve,
@@ -604,6 +646,12 @@ async function renderToFile(s, fmt, onProgress, base = nameFor(s)) {
   const octx = off.getContext('2d', { willReadFrequently: true });
   const straight = (n) => { checkCancel(); drawFrame(octx, s, n / fr.num, W, H); return octx.getImageData(0, 0, W, H).data; };
   const pixels = fmt === 'png' ? straight : (n) => premultiply(straight(n));
+  if (fmt === 'still') {
+    onProgress(0.4, 'Rendering…');
+    drawFrame(octx, s, holdTime(s), W, H);
+    const png = await encodePNG(octx.getImageData(0, 0, W, H).data, W, H);
+    return { blob: new Blob([png], { type: 'image/png' }), filename: `${base}_${W}x${H}.png` };
+  }
   const name = `${base}_${W}x${H}_${s.fps}fps`;
   const movName = `${name}${fmt === 'prores' ? '_ProRes4444' : '_Animation'}.mov`;
 
@@ -688,11 +736,18 @@ function parseBatch(text, badgeFirst) {
   return text.split(/\r?\n/).map((r) => r.trim()).filter(Boolean).map((row) => {
     const cols = row.split(/\t|\s*\|\s*/).map((c) => c.trim()).filter(Boolean);
     const badge = badgeFirst && cols.length > 1 ? cols.shift() : null;
-    return { badge, content: cols.join('\n') };
+    return { badge, content: cols.join('\n'), cols };
   }).filter((r) => r.content);
 }
+// Crest rows: first column = top text, second = bottom text; " / " inside a cell starts a new line
+const cellLines = (c) => (c || '').split(/\s+\/\s+/).join('\n');
 function designForRow(row, base = state) {
   const s = structuredClone(base);
+  if (s.style === 'crest') {
+    s.text.content = cellLines(row.cols[0]);
+    if (row.cols.length > 1) s.crest.bottom = row.cols.slice(1).map(cellLines).join('\n');
+    return s;
+  }
   s.text.content = row.content;
   if (row.badge != null) { s.badge.enabled = true; s.badge.text = row.badge; }
   return s;
@@ -748,7 +803,9 @@ function setupBatch() {
   };
   $('batchClose').onclick = () => dlg.close();
   $('batchSample').onclick = () => {
-    ta.value = state.badge.enabled
+    ta.value = state.style === 'crest'
+      ? 'Welcome to / MAGICAL / Marble\tFamily Fun / ALL WEEKEND\nMeet the / ARTISTS / Today\tMain Tent / 14:00'
+      : state.badge.enabled
       ? '18:00\tOpening set\tDJ One\n19:30\tMain act\tThe Headliners\n21:00\tClosing set\tDJ Two'
       : 'Speaker One\tHead of Marketing, Company\nSpeaker Two\tFounder, Studio\nSpeaker Three\tCreative Director, Agency';
     badgeBox.checked = state.badge.enabled;

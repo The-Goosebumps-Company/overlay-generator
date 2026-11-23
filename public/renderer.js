@@ -43,6 +43,16 @@ export const BASE = {
     bevel: 0.35, bevelSize: 8, lightAngle: 42,
     shadowColor: '#49121F', shadowOpacity: 0.55, shadowAngle: 40, shadowDistance: 14, shadowBlur: 16,
   },
+  // 'crest' = MMFF two-part badge: top text in a shield panel, bottom text below.
+  // It grows taller (never wider) as lines are added.
+  crest: {
+    variant: 'solid', // solid | outline | overlay
+    bottom: 'Also Add\nTEXT HERE',
+    fill: '#83D6AC', panel: '#FF7BAC', line: '#EFFACF', topColor: '#EFFACF', bottomColor: '#00664F',
+    tint: '#000000', tintOpacity: 0.15, stroke: 16,
+    capsFont: 'Fraunces', capsWeight: 900, scriptFont: 'Snell Roundhand',
+    topSize: 136, bottomSize: 125, tracking: 0,
+  },
 };
 
 export function defaults() { return structuredClone(BASE); }
@@ -184,6 +194,7 @@ function drawGlowBox(ctx, k, box, opt, t, key, blobs, blobAlpha) {
 // Measure text + badge and work out where the card sits in the frame.
 export function computeLayout(ctx, s, W, H) {
   if (s.style === 'gold') return goldLayout(ctx, s, W, H);
+  if (s.style === 'crest') return crestLayout(ctx, s, W, H);
   const T = s.text, C = s.card, B = s.badge;
   const raw = T.uppercase ? T.content.toUpperCase() : T.content;
   const lines = raw.split('\n');
@@ -305,6 +316,7 @@ export function drawFrame(ctx, s, t, W, H) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   if (s.style === 'gold') return drawGold(ctx, s, t, W, H, ds);
+  if (s.style === 'crest') return drawCrest(ctx, s, t, W, H, ds);
   const Lay = computeLayout(ctx, s, W, H);
   const tl = timeline(s, t);
   if (tl.alpha <= 0.001 || tl.gw <= 0.001) return Lay;
@@ -614,16 +626,25 @@ function buildGold(s, geo, k) {
   return cv;
 }
 
+// Timeline for still-built looks (gold, crest): the box "line" animation plays as a fade
+const stillTimeline = (s, t) => timeline({ ...s, anim: { ...s.anim, inStyle: s.anim.inStyle === 'line' ? 'fade' : s.anim.inStyle, outStyle: s.anim.outStyle === 'line' ? 'fade' : s.anim.outStyle } }, t);
+
+// Draw a pre-built image centred on the layout's card, with the timeline's fade/pop/slide
+function blitStill(ctx, Lay, tl, ds, img) {
+  const { card } = Lay;
+  const cx = (card.x + card.w / 2) * Lay.u * ds, cy = (card.y + card.h / 2 + tl.dy) * Lay.u * ds;
+  const iw = img.width * tl.scale, ih = img.height * tl.scale;
+  if (tl.scale === 1) ctx.drawImage(img, Math.round(cx - iw / 2), Math.round(cy - ih / 2));
+  else ctx.drawImage(img, cx - iw / 2, cy - ih / 2, iw, ih);
+}
+
 function drawGold(ctx, s, t, W, H, ds) {
   const Lay = goldLayout(ctx, s, W, H);
-  // the box animations don't apply to lettering; "line" plays as a fade
-  const tl = timeline({ ...s, anim: { ...s.anim, inStyle: s.anim.inStyle === 'line' ? 'fade' : s.anim.inStyle, outStyle: s.anim.outStyle === 'line' ? 'fade' : s.anim.outStyle } }, t);
+  const tl = stillTimeline(s, t);
   if (tl.alpha <= 0.001) return Lay;
   const G = s.gold;
   const k0 = Lay.u * ds, k = k0 * tl.scale;
   const img = buildGold(s, Lay.geo, k0); // built once; pop/shrink only scales the blit
-  const { card } = Lay;
-  const cx = (card.x + card.w / 2) * Lay.u * ds, cy = (card.y + card.h / 2 + tl.dy) * Lay.u * ds;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = tl.alpha;
   if (G.shadowOpacity > 0) {
@@ -633,10 +654,150 @@ function drawGold(ctx, s, t, W, H, ds) {
     ctx.shadowOffsetX = -Math.cos(sa) * sd;
     ctx.shadowOffsetY = Math.sin(sa) * sd;
   }
-  const iw = img.width * tl.scale, ih = img.height * tl.scale;
-  if (tl.scale === 1) ctx.drawImage(img, Math.round(cx - iw / 2), Math.round(cy - ih / 2));
-  else ctx.drawImage(img, cx - iw / 2, cy - ih / 2, iw, ih);
+  blitStill(ctx, Lay, tl, ds, img);
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+  ctx.globalAlpha = 1;
+  return Lay;
+}
+
+// ---------- MMFF crest ----------
+// Shapes traced from MMFF_2027_Overlays.ai (artboard 1080 × 1920 pt, y up).
+// Every side is a straight vertical line, so the crest stretches vertically by
+// moving points below a split line down: below CREST_TOP_SPLIT for extra top
+// lines, below CREST_BOTTOM_SPLIT for extra bottom lines. The width never changes.
+const CREST_PATHS = {
+  outer: 'M 540 350.25 C 519.94 350.25 499.88 357.9 484.58 373.2 C 404.46 453.32 281.27 461.96 232.02 461.96 C 217.34 461.96 208.05 461.21 206.81 461.1 C 204.05 460.81 201.29 460.66 198.55 460.66 C 179.37 460.66 160.92 467.76 146.46 480.74 C 129.89 495.6 120.73 516.85 120.73 539.11 L 120.73 1380.9 C 120.73 1403.16 129.89 1424.41 146.47 1439.27 C 160.92 1452.24 179.38 1459.34 198.55 1459.34 C 201.3 1459.34 204.06 1459.2 206.84 1458.9 C 208.13 1458.79 217.39 1458.04 232.02 1458.04 C 281.27 1458.04 404.47 1466.69 484.58 1546.8 C 499.88 1562.1 519.94 1569.76 540 1569.76 C 560.06 1569.76 580.12 1562.1 595.43 1546.8 C 678.97 1463.26 836.04 1459.03 866.68 1459.03 C 873.36 1459.03 877.16 1459.19 877.19 1459.2 C 878.49 1459.26 879.79 1459.29 881.09 1459.29 C 901.14 1459.29 920.41 1451.59 935.02 1437.69 C 950.57 1422.89 959.27 1402.36 959.27 1380.9 L 959.27 539.11 C 959.27 517.64 950.47 497.11 934.92 482.32 C 920.31 468.42 900.95 460.72 880.89 460.72 C 879.59 460.72 878.3 460.75 876.99 460.82 C 876.98 460.82 873.21 460.98 866.69 460.98 C 836.05 460.98 678.97 456.74 595.43 373.2 C 580.12 357.9 560.06 350.25 540 350.25 Z',
+  shield: 'M 540 1491.37 C 408.43 1359.8 199.11 1380.9 199.11 1380.9 L 199.11 842.02 C 199.11 842.02 408.43 863.11 540 731.54 C 661.4 852.95 880.89 842.02 880.89 842.02 L 880.89 1380.9 C 880.89 1380.9 661.4 1369.97 540 1491.37 Z',
+  panel: 'M 540.19 758.82 C 434.91 852.74 290.87 863.23 232.02 863.23 C 227.28 863.23 222.95 863.17 219.08 863.07 L 219.08 1359.85 C 222.95 1359.75 227.28 1359.68 232.02 1359.68 C 290.87 1359.68 434.91 1370.18 540.19 1464.09 C 581.32 1428.99 682.95 1362.11 860.92 1360.69 L 860.92 862.22 C 682.95 860.8 581.32 793.93 540.19 758.82 Z',
+};
+const CREST = {
+  left: 120.73, right: 959.27, top: 1569.76, bottom: 350.25,
+  topSplit: 1110, bottomSplit: 600,
+  topMid: 1070.2, topLines: 3, topWidth: 560, // middle baseline of the 3-line top block
+  bottomMid: 593.77, bottomLines: 2, bottomWidth: 740,
+  lead: 0.889, // line advance, × font size
+};
+const parsedCrest = {};
+const crestPath = (name) => parsedCrest[name] || (parsedCrest[name] = CREST_PATHS[name].split(' ').reduce((acc, tok) => {
+  if (/^[MLCZ]$/.test(tok)) acc.push([tok]); else acc[acc.length - 1].push(+tok);
+  return acc;
+}, []));
+
+// Words with a lowercase letter are set in script ("Add", "Here"), all-caps words in the serif
+const isScriptWord = (w) => /[a-z]/.test(w);
+function crestBlock(ctx, C, raw, size, maxW) {
+  const capsF = (px) => `${C.capsWeight} ${px}px "${C.capsFont}", Georgia, serif`;
+  const scriptF = (px) => `900 ${px}px "${C.scriptFont}", ${SCRIPT_FALLBACK}`;
+  const lines = String(raw || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  return lines.map((str) => {
+    const words = str.split(/\s+/);
+    const measure = (px) => {
+      const space = px * 0.27; // word gap as in the artwork (Fraunces' own space is much narrower)
+      let x = 0;
+      const runs = words.map((w, i) => {
+        const script = isScriptWord(w);
+        ctx.font = script ? scriptF(px) : capsF(px);
+        const width = ctx.measureText(w).width + (script ? 0 : Math.max(0, [...w].length - 1) * C.tracking * px);
+        const r = { text: w, script, x, w: width, font: script ? scriptF(px) : capsF(px), track: script ? 0 : C.tracking * px };
+        x += width + (i < words.length - 1 ? space : 0);
+        return r;
+      });
+      return { runs, w: x };
+    };
+    let m = measure(size);
+    if (m.w > maxW) m = measure(size * maxW / m.w); // only ever shrinks to fit the width
+    return m;
+  });
+}
+
+function crestGeometry(ctx, s) {
+  const C = s.crest;
+  const top = crestBlock(ctx, C, s.text.uppercase ? s.text.content.toUpperCase() : s.text.content, C.topSize, CREST.topWidth);
+  const bottom = crestBlock(ctx, C, C.bottom, C.bottomSize, CREST.bottomWidth);
+  const tAdv = C.topSize * CREST.lead, bAdv = C.bottomSize * CREST.lead;
+  const topExtra = Math.max(0, top.length - CREST.topLines) * tAdv;
+  const bottomExtra = Math.max(0, bottom.length - CREST.bottomLines) * bAdv;
+  const pad = C.stroke / 2 + 2;
+  return {
+    top, bottom, tAdv, bAdv, topExtra, bottomExtra, pad,
+    w: CREST.right - CREST.left + pad * 2,
+    h: CREST.top - CREST.bottom + topExtra + bottomExtra + pad * 2,
+  };
+}
+
+function crestLayout(ctx, s, W, H) {
+  const geo = crestGeometry(ctx, s);
+  const { u, x, y } = place(s, W, H, geo.w, geo.h);
+  return { u, geo, card: { x, y, w: geo.w, h: geo.h } };
+}
+
+const crestCache = new Map();
+function buildCrest(s, geo, k) {
+  const C = s.crest;
+  const key = JSON.stringify([s.text.content, s.text.uppercase, C, Math.round(k * 1000), fontEpoch]);
+  const hit = crestCache.get(key);
+  if (hit) return hit;
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(2, Math.ceil(geo.w * k)); cv.height = Math.max(2, Math.ceil(geo.h * k));
+  const c = cv.getContext('2d');
+  // artwork (pt, y up) → canvas (px, y down), with the vertical stretch
+  const X = (x) => (x - CREST.left + geo.pad) * k;
+  const Y = (y) => (CREST.top + geo.pad - y + (y < CREST.topSplit ? geo.topExtra : 0) + (y < CREST.bottomSplit ? geo.bottomExtra : 0)) * k;
+  const path = (name, p = new Path2D()) => {
+    for (const [op, ...v] of crestPath(name)) {
+      if (op === 'M') p.moveTo(X(v[0]), Y(v[1]));
+      else if (op === 'L') p.lineTo(X(v[0]), Y(v[1]));
+      else if (op === 'C') p.bezierCurveTo(X(v[0]), Y(v[1]), X(v[2]), Y(v[3]), X(v[4]), Y(v[5]));
+      else p.closePath();
+    }
+    return p;
+  };
+  const outer = path('outer');
+  if (C.variant === 'solid') {
+    c.fillStyle = C.fill; c.fill(outer);
+    c.fillStyle = C.line; c.fill(path('shield'));
+    c.fillStyle = C.panel; c.fill(path('panel'));
+  } else {
+    if (C.variant === 'overlay' && C.tintOpacity > 0) { c.fillStyle = rgba(C.tint, C.tintOpacity); c.fill(outer); }
+    c.strokeStyle = C.line; c.lineWidth = C.stroke * k; c.lineJoin = 'round';
+    c.stroke(outer);
+    c.fillStyle = C.line; c.fill(path('panel', path('shield')), 'evenodd'); // the shield's frame as a ring
+  }
+
+  // text: top block centred in the panel, bottom block centred in the base
+  const solid = C.variant === 'solid';
+  const drawBlock = (lines, adv, midY, color) => {
+    c.fillStyle = solid ? color : C.line;
+    c.textBaseline = 'alphabetic';
+    lines.forEach((ln, i) => {
+      const base = midY + (i - (lines.length - 1) / 2) * adv; // y down, in pt
+      const x0 = 540 - ln.w / 2;
+      for (const r of ln.runs) {
+        c.font = r.font.replace(/(\d+(\.\d+)?)px/, (_, px) => `${px * k}px`);
+        if (!r.track) { c.fillText(r.text, X(x0 + r.x), base * k); continue; }
+        let x = x0 + r.x;
+        for (const ch of r.text) { c.fillText(ch, X(x), base * k); x += c.measureText(ch).width / k + r.track; }
+      }
+    });
+  };
+  const topMid = CREST.top + geo.pad - CREST.topMid + geo.topExtra / 2;
+  const bottomMid = CREST.top + geo.pad - CREST.bottomMid + geo.topExtra + geo.bottomExtra / 2;
+  drawBlock(geo.top, geo.tAdv, topMid, C.topColor);
+  drawBlock(geo.bottom, geo.bAdv, bottomMid, C.bottomColor);
+
+  crestCache.set(key, cv);
+  if (crestCache.size > 8) crestCache.delete(crestCache.keys().next().value);
+  return cv;
+}
+
+function drawCrest(ctx, s, t, W, H, ds) {
+  const Lay = crestLayout(ctx, s, W, H);
+  const tl = stillTimeline(s, t);
+  if (tl.alpha <= 0.001) return Lay;
+  const img = buildCrest(s, Lay.geo, Lay.u * ds);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = tl.alpha;
+  blitStill(ctx, Lay, tl, ds, img);
   ctx.globalAlpha = 1;
   return Lay;
 }
