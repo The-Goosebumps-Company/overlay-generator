@@ -47,6 +47,7 @@ export const BASE = {
   // It grows taller (never wider) as lines are added.
   crest: {
     variant: 'solid', // solid | outline | overlay
+    layout: 'two', // two = shield + bottom text; one = outer crest with a single text block
     bottom: 'Also Add\nTEXT HERE',
     fill: '#83D6AC', panel: '#FF7BAC', line: '#EFFACF', topColor: '#EFFACF', bottomColor: '#00664F',
     tint: '#000000', tintOpacity: 0.15, stroke: 16,
@@ -675,6 +676,7 @@ const CREST = {
   topSplit: 1110, bottomSplit: 600,
   topMid: 1070.2, topLines: 3, topWidth: 560, // middle baseline of the 3-line top block
   bottomMid: 593.77, bottomLines: 2, bottomWidth: 740,
+  singleMid: 960, singleLines: 5, // one-text layout: block centred in the crest, grows past 5 lines
   lead: 0.889, // line advance, × font size
 };
 const parsedCrest = {};
@@ -714,15 +716,22 @@ function crestBlock(ctx, C, raw, size, maxW) {
 
 function crestGeometry(ctx, s) {
   const C = s.crest;
+  const pad = C.stroke / 2 + 2;
+  const w = CREST.right - CREST.left + pad * 2;
+  if (C.layout === 'one') {
+    // no shield: one block, stretched from the middle (only the lower cap moves down)
+    const top = crestBlock(ctx, C, s.text.uppercase ? s.text.content.toUpperCase() : s.text.content, C.topSize, CREST.bottomWidth);
+    const tAdv = C.topSize * CREST.lead;
+    const bottomExtra = Math.max(0, top.length - CREST.singleLines) * tAdv;
+    return { one: true, top, bottom: [], tAdv, bAdv: 0, topExtra: 0, bottomExtra, pad, w, h: CREST.top - CREST.bottom + bottomExtra + pad * 2 };
+  }
   const top = crestBlock(ctx, C, s.text.uppercase ? s.text.content.toUpperCase() : s.text.content, C.topSize, CREST.topWidth);
   const bottom = crestBlock(ctx, C, C.bottom, C.bottomSize, CREST.bottomWidth);
   const tAdv = C.topSize * CREST.lead, bAdv = C.bottomSize * CREST.lead;
   const topExtra = Math.max(0, top.length - CREST.topLines) * tAdv;
   const bottomExtra = Math.max(0, bottom.length - CREST.bottomLines) * bAdv;
-  const pad = C.stroke / 2 + 2;
   return {
-    top, bottom, tAdv, bAdv, topExtra, bottomExtra, pad,
-    w: CREST.right - CREST.left + pad * 2,
+    top, bottom, tAdv, bAdv, topExtra, bottomExtra, pad, w,
     h: CREST.top - CREST.bottom + topExtra + bottomExtra + pad * 2,
   };
 }
@@ -757,13 +766,15 @@ function buildCrest(s, geo, k) {
   const outer = path('outer');
   if (C.variant === 'solid') {
     c.fillStyle = C.fill; c.fill(outer);
-    c.fillStyle = C.line; c.fill(path('shield'));
-    c.fillStyle = C.panel; c.fill(path('panel'));
+    if (!geo.one) {
+      c.fillStyle = C.line; c.fill(path('shield'));
+      c.fillStyle = C.panel; c.fill(path('panel'));
+    }
   } else {
     if (C.variant === 'overlay' && C.tintOpacity > 0) { c.fillStyle = rgba(C.tint, C.tintOpacity); c.fill(outer); }
     c.strokeStyle = C.line; c.lineWidth = C.stroke * k; c.lineJoin = 'round';
     c.stroke(outer);
-    c.fillStyle = C.line; c.fill(path('panel', path('shield')), 'evenodd'); // the shield's frame as a ring
+    if (!geo.one) { c.fillStyle = C.line; c.fill(path('panel', path('shield')), 'evenodd'); } // the shield's frame as a ring
   }
 
   // text: top block centred in the panel, bottom block centred in the base
@@ -782,6 +793,12 @@ function buildCrest(s, geo, k) {
       }
     });
   };
+  if (geo.one) { // single block on the crest itself, in the bottom text colour (forest on mint)
+    drawBlock(geo.top, geo.tAdv, CREST.top + geo.pad - CREST.singleMid + geo.bottomExtra / 2, C.bottomColor);
+    crestCache.set(key, cv);
+    if (crestCache.size > 8) crestCache.delete(crestCache.keys().next().value);
+    return cv;
+  }
   const topMid = CREST.top + geo.pad - CREST.topMid + geo.topExtra / 2;
   const bottomMid = CREST.top + geo.pad - CREST.bottomMid + geo.topExtra + geo.bottomExtra / 2;
   drawBlock(geo.top, geo.tAdv, topMid, C.topColor);

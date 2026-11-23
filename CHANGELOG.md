@@ -2,6 +2,11 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.9.0 · One-text MMFF crest
+- New crest **Layout: One text**: the outer crest without the inner shield, with a single block of text in the middle. It comes in Solid, Outline and Overlay like the two-part crest.
+- Like the two-part crest it only grows taller: past five lines the crest stretches, and long lines shrink to fit.
+- Three new MMFF templates: *Solid / Outline / Overlay crest, one text*. In batch export every column becomes a line.
+
 ## 1.8.3 · LMC clean-up
 - Removed the LMC *Countdown*, *Act lower third* and *Show time* box templates. LMC now holds just the Evophoria 2026 gold text.
 

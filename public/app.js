@@ -76,12 +76,16 @@ const isCrest = (s) => s.style === 'crest';
 const isGlow = (s) => !isGold(s) && !isCrest(s);
 const notGold = isGlow; // text colour, reveal and the box sections only apply to the glow box
 const notCrest = (s) => !isCrest(s);
+const crestOne = (s) => isCrest(s) && s.crest.layout === 'one';
+const crestTwo = (s) => isCrest(s) && s.crest.layout !== 'one';
+const crestSolid = (s) => s.crest.variant === 'solid';
 const SECTIONS = [
   { title: 'Text', open: true, items: [
     { k: 'style', type: 'select', label: 'Look', options: [['glow', 'Glow box'], ['gold', 'Gold glitter text'], ['crest', 'MMFF crest (two-part)']] },
     { k: 'text.content', type: 'textarea', label: 'Your text', help: 'Each line in the box becomes a line on screen.', show: notCrest },
-    { k: 'text.content', type: 'textarea', label: 'Top text (in the shield)', help: 'Words with lowercase letters are set in script, ALL-CAPS words in the serif. Each line is a line on screen; more lines make the crest taller.', show: isCrest },
-    { k: 'crest.bottom', type: 'textarea', label: 'Bottom text', help: 'Same rules. Long lines shrink to fit; the crest never gets wider.', show: isCrest },
+    { k: 'text.content', type: 'textarea', label: 'Top text (in the shield)', help: 'Words with lowercase letters are set in script, ALL-CAPS words in the serif. Each line is a line on screen; more lines make the crest taller.', show: crestTwo },
+    { k: 'crest.bottom', type: 'textarea', label: 'Bottom text', help: 'Same rules. Long lines shrink to fit; the crest never gets wider.', show: crestTwo },
+    { k: 'text.content', type: 'textarea', label: 'Your text', help: 'Words with lowercase letters are set in script, ALL-CAPS words in the serif. After five lines the crest gets taller; it never gets wider.', show: crestOne },
     { k: 'text.font', type: 'font', label: 'Font', show: notCrest },
     { k: 'text.weight', type: 'select', label: 'Weight', options: WEIGHTS, show: notCrest },
     { k: 'text.size', type: 'range', label: 'Size', min: 12, max: 220, step: 1, show: notCrest },
@@ -114,17 +118,20 @@ const SECTIONS = [
     { k: 'gold.shadowAngle', type: 'range', label: 'Shadow angle°', min: 0, max: 360, step: 1 },
   ] },
   { title: 'Crest', open: true, show: isCrest, items: [
+    { k: 'crest.layout', type: 'select', label: 'Layout', options: [['two', 'Two-part (shield + bottom text)'], ['one', 'One text (no shield)']] },
     { k: 'crest.variant', type: 'select', label: 'Style', options: [['solid', 'Solid (filled)'], ['outline', 'Outline (see-through)'], ['overlay', 'Overlay (outline + tint)']] },
     { k: 'crest.capsFont', type: 'font', label: 'Capitals font', help: 'Beaufort Pro comes with the office server and the Mac app. On the website, add BeaufortPro-Heavy.otf with Add once; until then Fraunces stands in.' },
     { k: 'crest.scriptFont', type: 'font', label: 'Script font' },
-    { k: 'crest.topSize', type: 'range', label: 'Top text size', min: 40, max: 220, step: 1 },
-    { k: 'crest.bottomSize', type: 'range', label: 'Bottom text size', min: 40, max: 220, step: 1 },
+    { k: 'crest.topSize', type: 'range', label: 'Top text size', min: 40, max: 220, step: 1, show: crestTwo },
+    { k: 'crest.bottomSize', type: 'range', label: 'Bottom text size', min: 40, max: 220, step: 1, show: crestTwo },
+    { k: 'crest.topSize', type: 'range', label: 'Text size', min: 40, max: 220, step: 1, show: crestOne },
     { k: 'crest.tracking', type: 'range', label: 'Capitals spacing', min: -0.05, max: 0.3, step: 0.005 },
     { k: 'crest.fill', type: 'color', label: 'Crest fill', show: (s) => s.crest.variant === 'solid' },
-    { k: 'crest.panel', type: 'color', label: 'Shield fill', show: (s) => s.crest.variant === 'solid' },
+    { k: 'crest.panel', type: 'color', label: 'Shield fill', show: (s) => crestTwo(s) && crestSolid(s) },
     { k: 'crest.line', type: 'color', label: 'Lines (and text when see-through)' },
-    { k: 'crest.topColor', type: 'color', label: 'Top text', show: (s) => s.crest.variant === 'solid' },
-    { k: 'crest.bottomColor', type: 'color', label: 'Bottom text', show: (s) => s.crest.variant === 'solid' },
+    { k: 'crest.topColor', type: 'color', label: 'Top text', show: (s) => crestTwo(s) && crestSolid(s) },
+    { k: 'crest.bottomColor', type: 'color', label: 'Bottom text', show: (s) => crestTwo(s) && crestSolid(s) },
+    { k: 'crest.bottomColor', type: 'color', label: 'Text', show: (s) => crestOne(s) && crestSolid(s) },
     { k: 'crest.stroke', type: 'range', label: 'Outline width', min: 2, max: 40, step: 0.5, show: (s) => s.crest.variant !== 'solid' },
     { k: 'crest.tint', type: 'color', label: 'Tint colour', show: (s) => s.crest.variant === 'overlay' },
     { k: 'crest.tintOpacity', type: 'range', label: 'Tint strength', min: 0, max: 1, step: 0.01, show: (s) => s.crest.variant === 'overlay' },
@@ -247,7 +254,7 @@ function makeControl(it) {
   wrap.className = 'ctl';
   const id = `c${++uid}`;
   const label = `<label for="${id}">${it.label}</label>`;
-  const commit = (v) => { setP(state, it.k, v); logControl(it.k, v); changed(); if (it.k === 'style' || it.k === 'crest.variant' || it.k.startsWith('anim.') || it.k.startsWith('blobs.')) { syncControls(); syncFormat(); } };
+  const commit = (v) => { setP(state, it.k, v); logControl(it.k, v); changed(); if (it.k === 'style' || it.k === 'crest.variant' || it.k === 'crest.layout' || it.k.startsWith('anim.') || it.k.startsWith('blobs.')) { syncControls(); syncFormat(); } };
   if (it.type === 'range') {
     wrap.innerHTML = `${label}<input id="${id}" type="range" min="${it.min}" max="${it.max}" step="${it.step}"><span class="val"><input type="number" step="${it.step}" aria-label="${it.label} value"></span>`;
     const [r, n] = wrap.querySelectorAll('input');
@@ -602,7 +609,7 @@ function progress(p, text) {
   $('progressBar').style.width = `${Math.round((p || 0) * 100)}%`;
   $('progressText').textContent = text || '';
 }
-const nameFor = (s) => slug([s.text.content, s.style === 'crest' ? s.crest.bottom : ''].join(' ').split('\n').join(' '));
+const nameFor = (s) => slug([s.text.content, s.style === 'crest' && s.crest.layout !== 'one' ? s.crest.bottom : ''].join(' ').split('\n').join(' '));
 const outName = () => nameFor(state);
 
 let exporting = false, cancelRequested = false;
@@ -743,6 +750,7 @@ function parseBatch(text, badgeFirst) {
 const cellLines = (c) => (c || '').split(/\s+\/\s+/).join('\n');
 function designForRow(row, base = state) {
   const s = structuredClone(base);
+  if (s.style === 'crest' && s.crest.layout === 'one') { s.text.content = row.cols.map(cellLines).join('\n'); return s; }
   if (s.style === 'crest') {
     s.text.content = cellLines(row.cols[0]);
     if (row.cols.length > 1) s.crest.bottom = row.cols.slice(1).map(cellLines).join('\n');
@@ -803,7 +811,9 @@ function setupBatch() {
   };
   $('batchClose').onclick = () => dlg.close();
   $('batchSample').onclick = () => {
-    ta.value = state.style === 'crest'
+    ta.value = state.style === 'crest' && state.crest.layout === 'one'
+      ? 'Welcome to / MAGICAL / Marble\nMeet the / ARTISTS / Today'
+      : state.style === 'crest'
       ? 'Welcome to / MAGICAL / Marble\tFamily Fun / ALL WEEKEND\nMeet the / ARTISTS / Today\tMain Tent / 14:00'
       : state.badge.enabled
       ? '18:00\tOpening set\tDJ One\n19:30\tMain act\tThe Headliners\n21:00\tClosing set\tDJ Two'

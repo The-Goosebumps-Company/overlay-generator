@@ -97,14 +97,14 @@ function gold(name, content, { finish = 'Pale gold', size, lineHeight = 1, track
 }
 
 // MMFF crest: portrait, no motion (fade in/out can be switched on)
-function crest(name, variant, bottom = 'Also Add\nTEXT HERE') {
+function crest(name, variant, bottom = 'Also Add\nTEXT HERE', layout = 'two') {
   return {
     name, event: 'mmff', style: 'crest',
     width: 1080, height: 1920, fps: '25', duration: 5,
     anim: { in: false, out: false, inDur: 0.8, outDur: 0.6, inStyle: 'fade', outStyle: 'fade', textStyle: 'fade' },
     layout: { anchor: 'center', offsetX: 0, offsetY: 0, scale: 1, safe: 5, autoFit: true },
     text: { content: 'Add\nTEXT\nHere', uppercase: false },
-    crest: { variant, bottom },
+    crest: { variant, bottom, layout, ...(layout === 'one' ? { topSize: 170 } : {}) },
     blobs: { enabled: false },
   };
 }
@@ -170,6 +170,9 @@ function eventTemplates() {
     crest('MMFF · Outline crest', 'outline'),
     crest('MMFF · Overlay crest', 'overlay'),
     crest('MMFF · Overlay crest, long list', 'overlay', 'Also Add\nTEXT HERE\nTEXT HERE\nTEXT HERE\nTEXT HERE'),
+    crest('MMFF · Solid crest, one text', 'solid', undefined, 'one'),
+    crest('MMFF · Outline crest, one text', 'outline', undefined, 'one'),
+    crest('MMFF · Overlay crest, one text', 'overlay', undefined, 'one'),
 
     ev('shimza-friends', 'S&F · Title', {
       text: { ...sf, content: 'Shimza\n& Friends', size: 150, lineHeight: 0.95, tracking: 0 },
