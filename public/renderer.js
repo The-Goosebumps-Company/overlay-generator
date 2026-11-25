@@ -47,7 +47,7 @@ export const BASE = {
   // It grows taller (never wider) as lines are added.
   crest: {
     variant: 'solid', // solid | outline | overlay
-    layout: 'two', // two = shield + bottom text; one = outer crest with a single text block
+    layout: 'two', // two = shield + bottom text; one = outer crest with a single text block; text = no crest, text only
     bottom: 'Also Add\nTEXT HERE',
     fill: '#83D6AC', panel: '#FF7BAC', line: '#EFFACF', topColor: '#EFFACF', bottomColor: '#00664F',
     tint: '#000000', tintOpacity: 0.15, stroke: 16,
@@ -718,6 +718,14 @@ function crestGeometry(ctx, s) {
   const C = s.crest;
   const pad = C.stroke / 2 + 2;
   const w = CREST.right - CREST.left + pad * 2;
+  if (C.layout === 'text') {
+    // no crest at all: just the lettering, as wide as the crest's text area, as tall as its lines
+    const top = crestBlock(ctx, C, s.text.uppercase ? s.text.content.toUpperCase() : s.text.content, C.topSize, CREST.bottomWidth);
+    const tAdv = C.topSize * CREST.lead;
+    const tw = Math.max(1, ...top.map((l) => l.w));
+    const margin = C.topSize * 0.45; // room for script swashes above caps and descenders below
+    return { textOnly: true, top, bottom: [], tAdv, bAdv: 0, topExtra: 0, bottomExtra: 0, pad: 0, w: tw + margin * 2, h: Math.max(1, top.length) * tAdv + margin * 2 - (tAdv - C.topSize * 0.7) };
+  }
   if (C.layout === 'one') {
     // no shield: one block, stretched from the middle (only the lower cap moves down)
     const top = crestBlock(ctx, C, s.text.uppercase ? s.text.content.toUpperCase() : s.text.content, C.topSize, CREST.bottomWidth);
@@ -763,6 +771,24 @@ function buildCrest(s, geo, k) {
     }
     return p;
   };
+  if (geo.textOnly) {
+    // text only: no crest shape, centred in the canvas (x in pt from the block's centre)
+    const cx = geo.w / 2, capMid = C.topSize * 0.35;
+    c.fillStyle = C.topColor; c.textBaseline = 'alphabetic';
+    geo.top.forEach((ln, i) => {
+      const base = (geo.h / 2 + capMid + (i - (geo.top.length - 1) / 2) * geo.tAdv) * k;
+      const x0 = cx - ln.w / 2;
+      for (const r of ln.runs) {
+        c.font = r.font.replace(/(\d+(\.\d+)?)px/, (_, px) => `${px * k}px`);
+        if (!r.track) { c.fillText(r.text, (x0 + r.x) * k, base); continue; }
+        let x = x0 + r.x;
+        for (const ch of r.text) { c.fillText(ch, x * k, base); x += c.measureText(ch).width / k + r.track; }
+      }
+    });
+    crestCache.set(key, cv);
+    if (crestCache.size > 8) crestCache.delete(crestCache.keys().next().value);
+    return cv;
+  }
   const outer = path('outer');
   if (C.variant === 'solid') {
     c.fillStyle = C.fill; c.fill(outer);

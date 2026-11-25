@@ -2,6 +2,10 @@
 
 Each release has a Mac zip attached on the [releases page](https://github.com/The-Goosebumps-Company/overlay-generator/releases). The web app updates itself.
 
+## 1.10.0 · MMFF text only
+- New crest **Layout: Text only**: the MMFF lettering (script and Beaufort capitals) with no crest behind it, on a transparent background. Pick the colour under **Text colour**.
+- Three new MMFF templates: *Text only, cream / forest / pink*, set to "Magical Marble / FAMILY FEST". In batch export every column becomes a line.
+
 ## 1.9.0 · One-text MMFF crest
 - New crest **Layout: One text**: the outer crest without the inner shield, with a single block of text in the middle. It comes in Solid, Outline and Overlay like the two-part crest.
 - Like the two-part crest it only grows taller: past five lines the crest stretches, and long lines shrink to fit.
